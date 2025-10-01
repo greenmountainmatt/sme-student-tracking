@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,6 +20,7 @@ interface ContextData {
   when: string;
   where: string;
   why: string;
+  notes: string;
 }
 
 interface ContextCaptureProps {
@@ -49,7 +50,12 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
     when: getCurrentTimeBlock(),
     where: "Classroom",
     why: "Unclear",
+    notes: "",
   });
+  const [whatOther, setWhatOther] = useState("");
+  const [whenOther, setWhenOther] = useState("");
+  const [whereOther, setWhereOther] = useState("");
+  const [whyOther, setWhyOther] = useState("");
 
   useEffect(() => {
     onContextChange(context);
@@ -127,10 +133,9 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-popover z-50">
                 <SelectItem value="Independent Work">Independent Work</SelectItem>
                 <SelectItem value="Group Work">Group Work</SelectItem>
-                <SelectItem value="Lecture">Lecture</SelectItem>
                 <SelectItem value="Assessment">Assessment</SelectItem>
                 <SelectItem value="Reading">Reading</SelectItem>
                 <SelectItem value="Writing">Writing</SelectItem>
@@ -138,8 +143,17 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
                 <SelectItem value="Discussion">Discussion</SelectItem>
                 <SelectItem value="Centers">Centers</SelectItem>
                 <SelectItem value="Free Choice">Free Choice</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
+            {context.what === "Other" && (
+              <Input
+                placeholder="Specify activity..."
+                value={whatOther}
+                onChange={(e) => setWhatOther(e.target.value)}
+                className="mt-2"
+              />
+            )}
           </div>
 
           {/* WHEN - Schedule Block */}
@@ -151,7 +165,7 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-popover z-50">
                 <SelectItem value="Warm-up">Warm-up</SelectItem>
                 <SelectItem value="Core Instruction">Core Instruction</SelectItem>
                 <SelectItem value="Practice">Practice</SelectItem>
@@ -159,8 +173,17 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
                 <SelectItem value="Specials">Specials</SelectItem>
                 <SelectItem value="Transition">Transition</SelectItem>
                 <SelectItem value="End of Day">End of Day</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
+            {context.when === "Other" && (
+              <Input
+                placeholder="Specify schedule block..."
+                value={whenOther}
+                onChange={(e) => setWhenOther(e.target.value)}
+                className="mt-2"
+              />
+            )}
           </div>
 
           {/* WHERE - Location */}
@@ -168,19 +191,28 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
             <Label htmlFor="where" className="text-sm font-medium">
               Location (WHERE)
             </Label>
-            <div className="grid grid-cols-3 gap-2">
-              {["Classroom", "Small Group Room", "Hallway", "Cafeteria", "Playground", "Library"].map((location) => (
-                <Button
-                  key={location}
-                  variant={context.where === location ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateContext("where", location)}
-                  className="text-xs"
-                >
-                  {location}
-                </Button>
-              ))}
-            </div>
+            <Select value={context.where} onValueChange={(value) => updateContext("where", value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50">
+                <SelectItem value="Classroom">Classroom</SelectItem>
+                <SelectItem value="Small Group Room">Small Group Room</SelectItem>
+                <SelectItem value="Hallway">Hallway</SelectItem>
+                <SelectItem value="Cafeteria">Cafeteria</SelectItem>
+                <SelectItem value="Playground">Playground</SelectItem>
+                <SelectItem value="Library">Library</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            {context.where === "Other" && (
+              <Input
+                placeholder="Specify location..."
+                value={whereOther}
+                onChange={(e) => setWhereOther(e.target.value)}
+                className="mt-2"
+              />
+            )}
           </div>
 
           {/* WHY - Function/Hypothesis */}
@@ -192,7 +224,7 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-popover z-50">
                 <SelectItem value="Escape/Avoid">Escape/Avoid</SelectItem>
                 <SelectItem value="Attention-Seeking">Attention-Seeking</SelectItem>
                 <SelectItem value="Sensory">Sensory</SelectItem>
@@ -201,8 +233,31 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
                 <SelectItem value="Fatigue">Fatigue</SelectItem>
                 <SelectItem value="Motivation">Motivation</SelectItem>
                 <SelectItem value="Unclear">Unclear</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
+            {context.why === "Other" && (
+              <Input
+                placeholder="Specify function/hypothesis..."
+                value={whyOther}
+                onChange={(e) => setWhyOther(e.target.value)}
+                className="mt-2"
+              />
+            )}
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label htmlFor="notes" className="text-sm font-medium">
+              Contextual Notes
+            </Label>
+            <Textarea
+              id="notes"
+              placeholder="Add any additional observations or context..."
+              value={context.notes}
+              onChange={(e) => updateContext("notes", e.target.value)}
+              className="min-h-[80px]"
+            />
           </div>
         </CardContent>
       )}

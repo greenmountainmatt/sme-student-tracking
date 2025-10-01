@@ -18,6 +18,7 @@ interface Observation {
     when: string;
     where: string;
     why: string;
+    notes: string;
   };
 }
 
@@ -54,9 +55,6 @@ const Index = () => {
   }, [observations]);
 
   const handleTimerStart = () => {
-    if (!currentContext?.student) {
-      return;
-    }
     setIsTimerRunning(true);
     setIsTimerPaused(false);
   };
@@ -80,6 +78,7 @@ const Index = () => {
         when: currentContext.when,
         where: currentContext.where,
         why: currentContext.why,
+        notes: currentContext.notes || "",
       },
     };
 
@@ -156,6 +155,7 @@ const Index = () => {
               onTimerEnd={handleTimerEnd}
               isRunning={isTimerRunning}
               isPaused={isTimerPaused}
+              currentContext={currentContext}
             />
 
             <ContextCapture
@@ -210,6 +210,11 @@ const Index = () => {
                                   <span className="text-muted-foreground">Why:</span> {obs.context.why}
                                 </div>
                               </div>
+                              {obs.context.notes && (
+                                <div className="text-xs mt-2 pt-2 border-t">
+                                  <span className="text-muted-foreground">Notes:</span> {obs.context.notes}
+                                </div>
+                              )}
                             </div>
                           </CardContent>
                         </Card>

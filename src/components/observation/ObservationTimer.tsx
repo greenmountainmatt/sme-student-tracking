@@ -12,6 +12,7 @@ interface ObservationTimerProps {
   onTimerEnd: (duration: number) => void;
   isRunning: boolean;
   isPaused: boolean;
+  currentContext: { student: string } | null;
 }
 
 export function ObservationTimer({
@@ -22,6 +23,7 @@ export function ObservationTimer({
   onTimerEnd,
   isRunning,
   isPaused,
+  currentContext,
 }: ObservationTimerProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -54,6 +56,10 @@ export function ObservationTimer({
   const handleStart = () => {
     if (!currentStatus) {
       toast.error("Please select a task status first");
+      return;
+    }
+    if (!currentContext?.student) {
+      toast.error("Please enter a student name first");
       return;
     }
     setElapsedTime(0);
