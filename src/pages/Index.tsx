@@ -1,11 +1,226 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useEffect } from "react";
+import { ObservationTimer } from "@/components/observation/ObservationTimer";
+import { ContextCapture } from "@/components/observation/ContextCapture";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { ClipboardList } from "lucide-react";
+
+interface Observation {
+  id: string;
+  timestamp: Date;
+  student: string;
+  status: "on-task" | "off-task" | "transitioning";
+  duration: number;
+  context: {
+    who: string;
+    what: string;
+    when: string;
+    where: string;
+    why: string;
+  };
+}
 
 const Index = () => {
+  const [currentStatus, setCurrentStatus] = useState<"on-task" | "off-task" | "transitioning" | null>(null);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [isTimerPaused, setIsTimerPaused] = useState(false);
+  const [currentContext, setCurrentContext] = useState<any>(null);
+  const [observations, setObservations] = useState<Observation[]>([]);
+  const [recentStudents, setRecentStudents] = useState<string[]>([]);
+
+  // Load observations from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("observations");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setObservations(parsed.map((obs: any) => ({
+        ...obs,
+        timestamp: new Date(obs.timestamp)
+      })));
+    }
+
+    const savedRecent = localStorage.getItem("recentStudents");
+    if (savedRecent) {
+      setRecentStudents(JSON.parse(savedRecent));
+    }
+  }, []);
+
+  // Save observations to localStorage
+  useEffect(() => {
+    if (observations.length > 0) {
+      localStorage.setItem("observations", JSON.stringify(observations));
+    }
+  }, [observations]);
+
+  const handleTimerStart = () => {
+    if (!currentContext?.student) {
+      return;
+    }
+    setIsTimerRunning(true);
+    setIsTimerPaused(false);
+  };
+
+  const handleTimerPause = () => {
+    setIsTimerPaused(!isTimerPaused);
+  };
+
+  const handleTimerEnd = (duration: number) => {
+    if (!currentContext?.student || !currentStatus) return;
+
+    const newObservation: Observation = {
+      id: Date.now().toString(),
+      timestamp: new Date(),
+      student: currentContext.student,
+      status: currentStatus,
+      duration,
+      context: {
+        who: currentContext.who,
+        what: currentContext.what,
+        when: currentContext.when,
+        where: currentContext.where,
+        why: currentContext.why,
+      },
+    };
+
+    setObservations((prev) => [newObservation, ...prev]);
+
+    // Update recent students
+    const updatedRecent = [
+      currentContext.student,
+      ...recentStudents.filter((s) => s !== currentContext.student),
+    ].slice(0, 5);
+    setRecentStudents(updatedRecent);
+    localStorage.setItem("recentStudents", JSON.stringify(updatedRecent));
+
+    // Reset state
+    setIsTimerRunning(false);
+    setIsTimerPaused(false);
+    setCurrentStatus(null);
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, "default" | "destructive" | "secondary"> = {
+      "on-task": "default",
+      "off-task": "destructive",
+      "transitioning": "secondary",
+    };
+    return (
+      <Badge variant={variants[status] || "default"}>
+        {status.replace("-", " ").toUpperCase()}
+      </Badge>
+    );
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <ClipboardList className="w-8 h-8 text-primary" />
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Behavioral Observation</h1>
+            <p className="text-sm text-muted-foreground">Real-time classroom data collection</p>
+          </div>
+        </div>
+
+        {/* Active Student Header */}
+        {currentContext?.student && (
+          <Card className="bg-accent/20 border-accent">
+            <CardContent className="py-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm text-muted-foreground">Observing:</span>
+                  <span className="ml-2 text-lg font-semibold">{currentContext.student}</span>
+                </div>
+                {currentStatus && getStatusBadge(currentStatus)}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Left Column */}
+          <div className="space-y-6">
+            <ObservationTimer
+              onStatusChange={setCurrentStatus}
+              currentStatus={currentStatus}
+              onTimerStart={handleTimerStart}
+              onTimerPause={handleTimerPause}
+              onTimerEnd={handleTimerEnd}
+              isRunning={isTimerRunning}
+              isPaused={isTimerPaused}
+            />
+
+            <ContextCapture
+              onContextChange={setCurrentContext}
+              recentStudents={recentStudents}
+              isTimerRunning={isTimerRunning}
+            />
+          </div>
+
+          {/* Right Column - Observation History */}
+          <div>
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle>Recent Observations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[600px] pr-4">
+                  {observations.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      No observations yet. Start your first observation!
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {observations.map((obs) => (
+                        <Card key={obs.id} className="border">
+                          <CardContent className="p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <span className="font-semibold">{obs.student}</span>
+                                <span className="text-xs text-muted-foreground ml-2">
+                                  {obs.timestamp.toLocaleTimeString()}
+                                </span>
+                              </div>
+                              {getStatusBadge(obs.status)}
+                            </div>
+                            <div className="text-sm space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Duration:</span>
+                                <span className="font-medium">{formatDuration(obs.duration)}</span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                  <span className="text-muted-foreground">What:</span> {obs.context.what}
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Where:</span> {obs.context.where}
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">When:</span> {obs.context.when}
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Why:</span> {obs.context.why}
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
