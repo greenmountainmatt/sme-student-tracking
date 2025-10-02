@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface ContextData {
-  student: string;
   who: string;
   what: string;
   when: string;
@@ -42,9 +41,11 @@ const getCurrentTimeBlock = () => {
 };
 
 export function ContextCapture({ onContextChange, recentStudents, isTimerRunning }: ContextCaptureProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(() => {
+    const saved = localStorage.getItem("context5WExpanded");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const [context, setContext] = useState<ContextData>({
-    student: "",
     who: "None",
     what: "Independent Work",
     when: getCurrentTimeBlock(),
@@ -65,46 +66,43 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
     setContext((prev) => ({ ...prev, [field]: value }));
   };
 
+  const toggleExpanded = () => {
+    const newExpanded = !isExpanded;
+    setIsExpanded(newExpanded);
+    localStorage.setItem("context5WExpanded", JSON.stringify(newExpanded));
+  };
+
+  const getSummaryText = () => {
+    const parts = [
+      `Who: ${context.who}`,
+      `What: ${context.what === "Other" && whatOther ? whatOther : context.what}`,
+      `When: ${context.when === "Other" && whenOther ? whenOther : context.when}`,
+      `Where: ${context.where === "Other" && whereOther ? whereOther : context.where}`,
+      `Why: ${context.why === "Other" && whyOther ? whyOther : context.why}`,
+    ];
+    if (context.notes) {
+      parts.push("📝 Has notes");
+    }
+    return parts.join(" | ");
+  };
+
   return (
     <Card className="border-2">
-      <CardHeader className="cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+      <CardHeader className="cursor-pointer" onClick={toggleExpanded}>
         <div className="flex items-center justify-between">
-          <CardTitle>Context Capture (5W Framework)</CardTitle>
+          <CardTitle>Context (5W's)</CardTitle>
           {isExpanded ? <ChevronUp /> : <ChevronDown />}
         </div>
       </CardHeader>
+      
+      {!isExpanded && (
+        <CardContent className="pt-0">
+          <p className="text-xs text-muted-foreground truncate">{getSummaryText()}</p>
+        </CardContent>
+      )}
+      
       {isExpanded && (
-        <CardContent className="space-y-4">
-          {/* Student Selection (WHO - Primary) */}
-          <div className="space-y-2">
-            <Label htmlFor="student" className="text-base font-semibold">
-              Student <span className="text-destructive">*</span>
-            </Label>
-            {recentStudents.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
-                <span className="text-xs text-muted-foreground">Recent:</span>
-                {recentStudents.slice(0, 3).map((student) => (
-                  <Badge
-                    key={student}
-                    variant="outline"
-                    className="cursor-pointer hover:bg-accent"
-                    onClick={() => updateContext("student", student)}
-                  >
-                    {student}
-                  </Badge>
-                ))}
-              </div>
-            )}
-            <Input
-              id="student"
-              placeholder="Enter student name or initials"
-              value={context.student}
-              onChange={(e) => updateContext("student", e.target.value)}
-              disabled={isTimerRunning}
-              className="text-base"
-            />
-          </div>
-
+        <CardContent className="space-y-4 animate-accordion-down">
           {/* WHO - Others Present */}
           <div className="space-y-2">
             <Label htmlFor="who" className="text-sm font-medium">

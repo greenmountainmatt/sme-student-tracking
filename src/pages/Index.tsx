@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { ObserverIdentification } from "@/components/observation/ObserverIdentification";
+import { StudentSelection } from "@/components/observation/StudentSelection";
 import { ObservationTimer } from "@/components/observation/ObservationTimer";
 import { ContextCapture } from "@/components/observation/ContextCapture";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +11,7 @@ import { ClipboardList } from "lucide-react";
 interface Observation {
   id: string;
   timestamp: Date;
+  observer: string;
   student: string;
   status: "on-task" | "off-task" | "transitioning";
   duration: number;
@@ -23,6 +26,8 @@ interface Observation {
 }
 
 const Index = () => {
+  const [observer, setObserver] = useState("");
+  const [student, setStudent] = useState("");
   const [currentStatus, setCurrentStatus] = useState<"on-task" | "off-task" | "transitioning" | null>(null);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isTimerPaused, setIsTimerPaused] = useState(false);
@@ -64,12 +69,13 @@ const Index = () => {
   };
 
   const handleTimerEnd = (duration: number) => {
-    if (!currentContext?.student || !currentStatus) return;
+    if (!student || !currentStatus || !observer) return;
 
     const newObservation: Observation = {
       id: Date.now().toString(),
       timestamp: new Date(),
-      student: currentContext.student,
+      observer,
+      student,
       status: currentStatus,
       duration,
       context: {
@@ -86,8 +92,8 @@ const Index = () => {
 
     // Update recent students
     const updatedRecent = [
-      currentContext.student,
-      ...recentStudents.filter((s) => s !== currentContext.student),
+      student,
+      ...recentStudents.filter((s) => s !== student),
     ].slice(0, 5);
     setRecentStudents(updatedRecent);
     localStorage.setItem("recentStudents", JSON.stringify(updatedRecent));
@@ -96,6 +102,7 @@ const Index = () => {
     setIsTimerRunning(false);
     setIsTimerPaused(false);
     setCurrentStatus(null);
+    setStudent("");
   };
 
   const formatDuration = (seconds: number) => {
@@ -121,22 +128,41 @@ const Index = () => {
     <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <ClipboardList className="w-8 h-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Behavioral Observation</h1>
-            <p className="text-sm text-muted-foreground">Real-time classroom data collection</p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <ClipboardList className="w-8 h-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Behavioral Observation</h1>
+              <p className="text-sm text-muted-foreground">Real-time classroom data collection</p>
+            </div>
           </div>
+          {observer && (
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground">Observer</p>
+              <p className="text-sm font-semibold">{observer}</p>
+            </div>
+          )}
         </div>
 
+        {/* Observer Identification */}
+        <ObserverIdentification onObserverChange={setObserver} />
+
+        {/* Student Selection */}
+        <StudentSelection
+          onStudentChange={setStudent}
+          currentStudent={student}
+          recentStudents={recentStudents}
+          isTimerRunning={isTimerRunning}
+        />
+
         {/* Active Student Header */}
-        {currentContext?.student && (
+        {student && (
           <Card className="bg-accent/20 border-accent">
             <CardContent className="py-3">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-sm text-muted-foreground">Observing:</span>
-                  <span className="ml-2 text-lg font-semibold">{currentContext.student}</span>
+                  <span className="ml-2 text-lg font-semibold">{student}</span>
                 </div>
                 {currentStatus && getStatusBadge(currentStatus)}
               </div>
@@ -155,7 +181,8 @@ const Index = () => {
               onTimerEnd={handleTimerEnd}
               isRunning={isTimerRunning}
               isPaused={isTimerPaused}
-              currentContext={currentContext}
+              observer={observer}
+              student={student}
             />
 
             <ContextCapture
@@ -184,8 +211,10 @@ const Index = () => {
                           <CardContent className="p-4 space-y-2">
                             <div className="flex items-center justify-between">
                               <div>
-                                <span className="font-semibold">{obs.student}</span>
-                                <span className="text-xs text-muted-foreground ml-2">
+                                <div className="text-xs text-muted-foreground mb-1">
+                                  Observer: <span className="font-medium">{obs.observer || "Unknown"}</span> | Student: <span className="font-medium">{obs.student}</span>
+                                </div>
+                                <span className="text-xs text-muted-foreground">
                                   {obs.timestamp.toLocaleTimeString()}
                                 </span>
                               </div>

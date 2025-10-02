@@ -12,7 +12,8 @@ interface ObservationTimerProps {
   onTimerEnd: (duration: number) => void;
   isRunning: boolean;
   isPaused: boolean;
-  currentContext: { student: string } | null;
+  observer: string;
+  student: string;
 }
 
 export function ObservationTimer({
@@ -23,7 +24,8 @@ export function ObservationTimer({
   onTimerEnd,
   isRunning,
   isPaused,
-  currentContext,
+  observer,
+  student,
 }: ObservationTimerProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -54,12 +56,16 @@ export function ObservationTimer({
   };
 
   const handleStart = () => {
-    if (!currentStatus) {
-      toast.error("Please select a task status first");
+    if (!observer) {
+      toast.error("Please enter your name as observer");
       return;
     }
-    if (!currentContext?.student) {
-      toast.error("Please enter a student name first");
+    if (!student) {
+      toast.error("Please enter student initials");
+      return;
+    }
+    if (!currentStatus) {
+      toast.error("Please select a task status first");
       return;
     }
     setElapsedTime(0);
@@ -97,7 +103,7 @@ export function ObservationTimer({
               size="lg"
               onClick={() => onStatusChange("on-task")}
               data-active={currentStatus === "on-task"}
-              disabled={isRunning}
+              disabled={isRunning || !observer}
             >
               On Task
             </Button>
@@ -106,7 +112,7 @@ export function ObservationTimer({
               size="lg"
               onClick={() => onStatusChange("off-task")}
               data-active={currentStatus === "off-task"}
-              disabled={isRunning}
+              disabled={isRunning || !observer}
             >
               Off Task
             </Button>
@@ -115,7 +121,7 @@ export function ObservationTimer({
               size="lg"
               onClick={() => onStatusChange("transitioning")}
               data-active={currentStatus === "transitioning"}
-              disabled={isRunning}
+              disabled={isRunning || !observer}
             >
               Transitioning
             </Button>
@@ -135,15 +141,23 @@ export function ObservationTimer({
         {/* Timer Controls */}
         <div className="space-y-3">
           {!isRunning ? (
-            <Button
-              variant="success"
-              size="xl"
-              className="w-full"
-              onClick={handleStart}
-            >
-              <Play className="mr-2" />
-              START Timer
-            </Button>
+            <>
+              <Button
+                variant="success"
+                size="xl"
+                className="w-full"
+                onClick={handleStart}
+                disabled={!observer || !student}
+              >
+                <Play className="mr-2" />
+                START Timer
+              </Button>
+              {(!observer || !student) && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Enter observer and student to begin
+                </p>
+              )}
+            </>
           ) : (
             <div className="grid grid-cols-2 gap-3">
               <Button
