@@ -3,61 +3,33 @@ import { ObserverIdentification } from "@/components/observation/ObserverIdentif
 import { StudentSelection } from "@/components/observation/StudentSelection";
 import { ObservationTimer } from "@/components/observation/ObservationTimer";
 import { ContextCapture } from "@/components/observation/ContextCapture";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ClipboardList, List } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useObservations } from "@/hooks/useObservations";
 
-interface Observation {
-  id: string;
-  timestamp: Date;
-  observer: string;
-  student: string;
-  status: "on-task" | "off-task" | "transitioning";
-  duration: number;
-  context: {
-    who: string;
-    what: string;
-    when: string;
-    where: string;
-    why: string;
-    notes: string;
-  };
-}
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { observations, addObservation } = useObservations();
   const [observer, setObserver] = useState("");
   const [student, setStudent] = useState("");
   const [currentStatus, setCurrentStatus] = useState<"on-task" | "off-task" | "transitioning" | null>(null);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isTimerPaused, setIsTimerPaused] = useState(false);
   const [currentContext, setCurrentContext] = useState<any>(null);
-  const [observations, setObservations] = useState<Observation[]>([]);
   const [recentStudents, setRecentStudents] = useState<string[]>([]);
 
-  // Load observations from localStorage
+  // Load recent students from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem("observations");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setObservations(parsed.map((obs: any) => ({
-        ...obs,
-        timestamp: new Date(obs.timestamp)
-      })));
-    }
-
     const savedRecent = localStorage.getItem("recentStudents");
     if (savedRecent) {
       setRecentStudents(JSON.parse(savedRecent));
     }
   }, []);
-
-  // Save observations to localStorage
-  useEffect(() => {
-    if (observations.length > 0) {
-      localStorage.setItem("observations", JSON.stringify(observations));
-    }
-  }, [observations]);
 
   const handleTimerStart = () => {
     setIsTimerRunning(true);
@@ -71,7 +43,7 @@ const Index = () => {
   const handleTimerEnd = (duration: number) => {
     if (!student || !currentStatus || !observer) return;
 
-    const newObservation: Observation = {
+    const newObservation = {
       id: Date.now().toString(),
       timestamp: new Date(),
       observer,
@@ -88,7 +60,7 @@ const Index = () => {
       },
     };
 
-    setObservations((prev) => [newObservation, ...prev]);
+    addObservation(newObservation);
 
     // Update recent students
     const updatedRecent = [
@@ -195,8 +167,15 @@ const Index = () => {
           {/* Right Column - Observation History */}
           <div>
             <Card className="h-full">
-              <CardHeader>
-                <CardTitle>Recent Observations</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <div className="space-y-1">
+                  <CardTitle>Recent Observations</CardTitle>
+                  <CardDescription>Last 5 recorded observations</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => navigate("/observations")}>
+                  <List className="h-4 w-4 mr-2" />
+                  View All
+                </Button>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[600px] pr-4">
