@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { DurationInput } from "./DurationInput";
 import { Observation } from "@/hooks/useObservations";
 import { useState, useEffect } from "react";
@@ -33,7 +34,7 @@ export const EditObservationDialog = ({
   const [student, setStudent] = useState("");
   const [status, setStatus] = useState<"on-task" | "off-task" | "transitioning">("on-task");
   const [duration, setDuration] = useState(0);
-  const [who, setWho] = useState("");
+  const [who, setWho] = useState<string[]>([]);
   const [what, setWhat] = useState("");
   const [when, setWhen] = useState("");
   const [where, setWhere] = useState("");
@@ -72,7 +73,7 @@ export const EditObservationDialog = ({
         status,
         duration,
         context: {
-          who: who.trim(),
+          who: who,
           what: what.trim(),
           when: when.trim(),
           where: where.trim(),
@@ -141,13 +142,30 @@ export const EditObservationDialog = ({
             <h3 className="font-semibold">Context (5W's)</h3>
             
             <div className="space-y-2">
-              <Label htmlFor="who">Who</Label>
-              <Input
-                id="who"
-                value={who}
-                onChange={(e) => setWho(e.target.value)}
-                maxLength={200}
-              />
+              <Label htmlFor="who">Who (Others Present)</Label>
+              <div className="flex flex-wrap gap-2">
+                {["Peers", "Teacher", "Para", "Admin", "Parent", "Therapist", "Substitute", "Volunteer", "Other"].map((option) => (
+                  <Badge
+                    key={option}
+                    variant={who.includes(option) ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setWho((prev) =>
+                        prev.includes(option)
+                          ? prev.filter((w) => w !== option)
+                          : [...prev, option]
+                      );
+                    }}
+                  >
+                    {option}
+                  </Badge>
+                ))}
+              </div>
+              {who.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Selected: {who.join(", ")}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

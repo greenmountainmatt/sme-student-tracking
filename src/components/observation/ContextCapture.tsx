@@ -13,13 +13,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
+export interface Prompt {
+  type: string;
+  timestamp: Date;
+  effectiveness?: "effective" | "partially-effective" | "ineffective";
+}
+
 interface ContextData {
-  who: string;
+  who: string[];
   what: string;
   when: string;
   where: string;
   why: string;
   notes: string;
+  prompts?: Prompt[];
 }
 
 interface ContextCaptureProps {
@@ -46,17 +53,20 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [context, setContext] = useState<ContextData>({
-    who: "None",
+    who: [],
     what: "Independent Work",
     when: getCurrentTimeBlock(),
     where: "Classroom",
     why: "Unclear",
     notes: "",
+    prompts: [],
   });
   const [whatOther, setWhatOther] = useState("");
   const [whenOther, setWhenOther] = useState("");
   const [whereOther, setWhereOther] = useState("");
   const [whyOther, setWhyOther] = useState("");
+  const [promptOther, setPromptOther] = useState("");
+  const [selectedPrompts, setSelectedPrompts] = useState<{type: string, effectiveness?: string}[]>([]);
 
   useEffect(() => {
     onContextChange(context);
@@ -72,14 +82,53 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
     localStorage.setItem("context5WExpanded", JSON.stringify(newExpanded));
   };
 
+  const toggleWho = (option: string) => {
+    setContext((prev) => {
+      const newWho = prev.who.includes(option)
+        ? prev.who.filter((w) => w !== option)
+        : [...prev.who, option];
+      return { ...prev, who: newWho };
+    });
+  };
+
+  const togglePrompt = (promptType: string) => {
+    setSelectedPrompts((prev) => {
+      const exists = prev.find((p) => p.type === promptType);
+      if (exists) {
+        return prev.filter((p) => p.type !== promptType);
+      }
+      return [...prev, { type: promptType }];
+    });
+  };
+
+  const updatePromptEffectiveness = (promptType: string, effectiveness: string) => {
+    setSelectedPrompts((prev) =>
+      prev.map((p) =>
+        p.type === promptType ? { ...p, effectiveness } : p
+      )
+    );
+  };
+
+  useEffect(() => {
+    const promptsWithTimestamps = selectedPrompts.map((p) => ({
+      type: p.type === "Other" && promptOther ? promptOther : p.type,
+      timestamp: new Date(),
+      effectiveness: p.effectiveness as "effective" | "partially-effective" | "ineffective" | undefined,
+    }));
+    setContext((prev) => ({ ...prev, prompts: promptsWithTimestamps }));
+  }, [selectedPrompts, promptOther]);
+
   const getSummaryText = () => {
     const parts = [
-      `Who: ${context.who}`,
+      `Who: ${context.who.length > 0 ? context.who.join(", ") : "None"}`,
       `What: ${context.what === "Other" && whatOther ? whatOther : context.what}`,
       `When: ${context.when === "Other" && whenOther ? whenOther : context.when}`,
       `Where: ${context.where === "Other" && whereOther ? whereOther : context.where}`,
       `Why: ${context.why === "Other" && whyOther ? whyOther : context.why}`,
     ];
+    if (context.prompts && context.prompts.length > 0) {
+      parts.push(`Prompts: ${context.prompts.length}`);
+    }
     if (context.notes) {
       parts.push("📝 Has notes");
     }
@@ -103,23 +152,46 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
       
       {isExpanded && (
         <CardContent className="space-y-4 animate-accordion-down">
-          {/* WHO - Others Present */}
+          {/* WHO - Others Present (Multi-Select) */}
           <div className="space-y-2">
-            <Label htmlFor="who" className="text-sm font-medium">
-              Others Present (WHO)
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="who" className="text-sm font-medium">
+                Others Present (WHO)
+              </Label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setContext((prev) => ({ ...prev, who: ["Peers", "Teacher", "Para", "Admin", "Parent", "Therapist", "Substitute", "Volunteer"] }))}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Select All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContext((prev) => ({ ...prev, who: [] }))}
+                  className="text-xs text-muted-foreground hover:underline"
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
             <div className="flex flex-wrap gap-2">
-              {["Peers", "Teacher", "Para", "None", "Other"].map((option) => (
+              {["Peers", "Teacher", "Para", "Admin", "Parent", "Therapist", "Substitute", "Volunteer", "Other"].map((option) => (
                 <Badge
                   key={option}
-                  variant={context.who === option ? "default" : "outline"}
+                  variant={context.who.includes(option) ? "default" : "outline"}
                   className="cursor-pointer"
-                  onClick={() => updateContext("who", option)}
+                  onClick={() => toggleWho(option)}
                 >
                   {option}
                 </Badge>
               ))}
             </div>
+            {context.who.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Selected: {context.who.join(", ")}
+              </p>
+            )}
           </div>
 
           {/* WHAT - Activity/Task */}
@@ -239,6 +311,64 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
                 placeholder="Specify function/hypothesis..."
                 value={whyOther}
                 onChange={(e) => setWhyOther(e.target.value)}
+                className="mt-2"
+              />
+            )}
+          </div>
+
+          {/* PROMPTS - Interventions Used */}
+          <div className="space-y-2 border-t pt-4">
+            <Label className="text-sm font-medium">
+              Prompts/Interventions Used
+            </Label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                "Verbal Prompt",
+                "Visual Prompt", 
+                "Physical Prompt",
+                "Gestural Prompt",
+                "Positional Prompt",
+                "Model/Demo",
+                "Wait Time",
+                "Choice Offered",
+                "Break Provided",
+                "Redirection",
+                "Behavior Praise",
+                "Token/Reward",
+                "Environmental Mod",
+                "Other"
+              ].map((promptType) => (
+                <div key={promptType} className="space-y-1">
+                  <Badge
+                    variant={selectedPrompts.find((p) => p.type === promptType) ? "default" : "outline"}
+                    className="cursor-pointer w-full justify-center"
+                    onClick={() => togglePrompt(promptType)}
+                  >
+                    {promptType}
+                  </Badge>
+                  {selectedPrompts.find((p) => p.type === promptType) && (
+                    <Select
+                      value={selectedPrompts.find((p) => p.type === promptType)?.effectiveness || ""}
+                      onValueChange={(value) => updatePromptEffectiveness(promptType, value)}
+                    >
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="Effectiveness?" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        <SelectItem value="effective">Effective</SelectItem>
+                        <SelectItem value="partially-effective">Partially</SelectItem>
+                        <SelectItem value="ineffective">Ineffective</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              ))}
+            </div>
+            {selectedPrompts.find((p) => p.type === "Other") && (
+              <Input
+                placeholder="Specify other prompt..."
+                value={promptOther}
+                onChange={(e) => setPromptOther(e.target.value)}
                 className="mt-2"
               />
             )}

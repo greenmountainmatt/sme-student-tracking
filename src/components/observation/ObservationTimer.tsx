@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, Pause, Square } from "lucide-react";
+import { Play, Pause, Square, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { EpisodeTimer } from "./EpisodeTimer";
+import { BehaviorEpisode } from "@/hooks/useObservations";
 
 interface ObservationTimerProps {
   onStatusChange: (status: "on-task" | "off-task" | "transitioning") => void;
   currentStatus: "on-task" | "off-task" | "transitioning" | null;
   onTimerStart: () => void;
   onTimerPause: () => void;
-  onTimerEnd: (duration: number) => void;
+  onTimerEnd: (duration: number, episodes: BehaviorEpisode[]) => void;
   isRunning: boolean;
   isPaused: boolean;
   observer: string;
@@ -29,6 +31,10 @@ export function ObservationTimer({
 }: ObservationTimerProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [wakeLock, setWakeLock] = useState<any>(null);
+  const [episodes, setEpisodes] = useState<BehaviorEpisode[]>([]);
+  const [episodeStatus, setEpisodeStatus] = useState<"on-task" | "off-task" | "transitioning" | null>(null);
+  const [episodeStartTime, setEpisodeStartTime] = useState<Date | null>(null);
 
   useEffect(() => {
     if (isRunning && !isPaused) {
@@ -46,6 +52,43 @@ export function ObservationTimer({
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+    };
+  }, [isRunning, isPaused]);
+
+  // Wake Lock functionality
+  const requestWakeLock = async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        const lock = await (navigator as any).wakeLock.request('screen');
+        setWakeLock(lock);
+        toast.success("Screen wake lock activated");
+      }
+    } catch (err) {
+      console.error('Wake lock error:', err);
+    }
+  };
+
+  const releaseWakeLock = async () => {
+    if (wakeLock) {
+      try {
+        await wakeLock.release();
+        setWakeLock(null);
+        toast.info("Screen wake lock released");
+      } catch (err) {
+        console.error('Wake lock release error:', err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (isRunning && !isPaused) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+
+    return () => {
+      releaseWakeLock();
     };
   }, [isRunning, isPaused]);
 
@@ -69,6 +112,8 @@ export function ObservationTimer({
       return;
     }
     setElapsedTime(0);
+    setEpisodes([]);
+    setEpisodeStatus(null);
     onTimerStart();
     toast.success("Timer started");
   };
@@ -83,17 +128,111 @@ export function ObservationTimer({
       toast.error("Cannot end timer with zero duration");
       return;
     }
-    onTimerEnd(elapsedTime);
+    if (episodeStatus) {
+      toast.error("Please end the current episode first");
+      return;
+    }
+    onTimerEnd(elapsedTime, episodes);
     setElapsedTime(0);
+    setEpisodes([]);
     toast.success("Observation saved");
+  };
+
+  const startEpisode = (status: "on-task" | "off-task" | "transitioning") => {
+    if (status === currentStatus) {
+      toast.error(`Already recording ${status} behavior`);
+      return;
+    }
+    setEpisodeStatus(status);
+    setEpisodeStartTime(new Date());
+    toast.info(`Started recording ${status} episode`);
+  };
+
+  const endEpisode = (duration: number, status: "on-task" | "off-task" | "transitioning") => {
+    const newEpisode: BehaviorEpisode = {
+      id: `${Date.now()}-${Math.random()}`,
+      status,
+      startTime: episodeStartTime || new Date(),
+      duration,
+    };
+    setEpisodes((prev) => [...prev, newEpisode]);
+    setEpisodeStatus(null);
+    setEpisodeStartTime(null);
+    toast.success(`${status} episode saved (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, "0")})`);
+  };
+
+  const cancelEpisode = () => {
+    setEpisodeStatus(null);
+    setEpisodeStartTime(null);
+    toast.info("Episode cancelled");
   };
 
   return (
     <Card className="border-2">
       <CardHeader>
-        <CardTitle className="text-center">Observation Timer</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-center flex-1">Observation Timer</CardTitle>
+          {wakeLock && (
+            <div className="flex items-center gap-1 text-xs text-success">
+              <Zap className="h-3 w-3" />
+              Wake Lock Active
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Episode Timer */}
+        {isRunning && episodeStatus && (
+          <EpisodeTimer
+            status={episodeStatus}
+            onEpisodeEnd={endEpisode}
+            isActive={!!episodeStatus}
+            onCancel={cancelEpisode}
+          />
+        )}
+
+        {/* Quick Episode Buttons */}
+        {isRunning && !isPaused && !episodeStatus && (
+          <div className="flex gap-2">
+            {currentStatus !== "on-task" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 border-success text-success hover:bg-success/10"
+                onClick={() => startEpisode("on-task")}
+              >
+                Quick On Task
+              </Button>
+            )}
+            {currentStatus !== "off-task" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 border-destructive text-destructive hover:bg-destructive/10"
+                onClick={() => startEpisode("off-task")}
+              >
+                Quick Off Task
+              </Button>
+            )}
+            {currentStatus !== "transitioning" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 border-warning text-warning hover:bg-warning/10"
+                onClick={() => startEpisode("transitioning")}
+              >
+                Quick Transition
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Episodes Summary */}
+        {episodes.length > 0 && (
+          <div className="text-xs text-muted-foreground">
+            Episodes recorded: {episodes.length} ({episodes.filter(e => e.status === "on-task").length} on-task, {episodes.filter(e => e.status === "off-task").length} off-task, {episodes.filter(e => e.status === "transitioning").length} transitioning)
+          </div>
+        )}
         {/* Status Selection */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Task Status</label>

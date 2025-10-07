@@ -40,7 +40,7 @@ const Index = () => {
     setIsTimerPaused(!isTimerPaused);
   };
 
-  const handleTimerEnd = (duration: number) => {
+  const handleTimerEnd = (duration: number, episodes: any[]) => {
     if (!student || !currentStatus || !observer) return;
 
     const newObservation = {
@@ -50,13 +50,15 @@ const Index = () => {
       student,
       status: currentStatus,
       duration,
+      episodes,
       context: {
-        who: currentContext.who,
+        who: currentContext.who || [],
         what: currentContext.what,
         when: currentContext.when,
         where: currentContext.where,
         why: currentContext.why,
         notes: currentContext.notes || "",
+        prompts: currentContext.prompts || [],
       },
     };
 

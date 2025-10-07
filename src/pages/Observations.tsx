@@ -15,14 +15,13 @@ const Observations = () => {
   const { observations, updateObservation, deleteObservation } = useObservations();
   const [editingObservation, setEditingObservation] = useState<Observation | null>(null);
   const [deletingObservation, setDeletingObservation] = useState<Observation | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const handleEdit = (observation: Observation) => {
-    setEditingObservation(observation);
-  };
-
-  const handleDelete = (observation: Observation) => {
-    setDeletingObservation(observation);
-  };
+  const ITEMS_PER_PAGE = 50;
+  const totalPages = Math.ceil(observations.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const displayedObservations = observations.slice(startIndex, endIndex);
 
   const confirmDelete = () => {
     if (deletingObservation) {
@@ -30,8 +29,6 @@ const Observations = () => {
       setDeletingObservation(null);
     }
   };
-
-  const last50Observations = observations.slice(0, 50);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
@@ -45,39 +42,71 @@ const Observations = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Recent Observations</h1>
+            <h1 className="text-3xl font-bold">All Observations</h1>
             <p className="text-muted-foreground">
-              Showing last {last50Observations.length} observations
+              Viewing {displayedObservations.length} of {observations.length} total observations
             </p>
           </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Observation History</CardTitle>
-            <CardDescription>
-              Tap any observation to edit. Swipe left on mobile or click the trash icon to delete.
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Observation History</CardTitle>
+                <CardDescription>
+                  Tap any observation to edit. Swipe left on mobile or click the trash icon to delete.
+                </CardDescription>
+              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2 text-sm">
+                  Page {currentPage} of {totalPages}
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[calc(100vh-280px)]">
               <div className="space-y-2">
-                {last50Observations.length === 0 ? (
+                {displayedObservations.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
                     No observations yet. Start recording to see them here.
                   </p>
                 ) : (
-                  last50Observations.map((observation) => (
+                  displayedObservations.map((observation) => (
                     <ObservationListItem
                       key={observation.id}
                       observation={observation}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
+                      onEdit={() => setEditingObservation(observation)}
+                      onDelete={() => setDeletingObservation(observation)}
                     />
                   ))
                 )}
               </div>
             </ScrollArea>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-4 border-t mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground px-4">
+                  {startIndex + 1}-{Math.min(endIndex, observations.length)} of {observations.length}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
