@@ -153,6 +153,7 @@ export function ObservationTimer({
       id: `${Date.now()}-${Math.random()}`,
       status,
       startTime: episodeStartTime || new Date(),
+      endTime: new Date(),
       duration,
     };
     setEpisodes((prev) => [...prev, newEpisode]);

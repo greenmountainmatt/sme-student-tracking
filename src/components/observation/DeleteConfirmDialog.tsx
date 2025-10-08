@@ -32,7 +32,7 @@ export const DeleteConfirmDialog = ({
           <AlertDialogTitle>Delete Observation?</AlertDialogTitle>
           <AlertDialogDescription>
             Delete observation for {studentInitials} from{" "}
-            {format(timestamp, "MM/dd HH:mm")}? This action cannot be undone.
+            {format(timestamp, "MM/dd/yyyy HH:mm:ss")}? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

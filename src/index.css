@@ -100,4 +100,17 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* iPad Mini and small tablet optimizations */
+  @media (min-width: 768px) and (max-width: 1024px) {
+    html {
+      font-size: 18px; /* Increase base font size for iPad Mini */
+    }
+    
+    /* Ensure minimum touch target sizes */
+    button, a, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
 }

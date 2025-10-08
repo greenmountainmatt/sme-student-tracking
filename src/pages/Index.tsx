@@ -45,7 +45,7 @@ const Index = () => {
 
     const newObservation = {
       id: Date.now().toString(),
-      timestamp: new Date(),
+      createdAt: new Date(),
       observer,
       student,
       status: currentStatus,
@@ -196,7 +196,7 @@ const Index = () => {
                                   Observer: <span className="font-medium">{obs.observer || "Unknown"}</span> | Student: <span className="font-medium">{obs.student}</span>
                                 </div>
                                 <span className="text-xs text-muted-foreground">
-                                  {obs.timestamp.toLocaleTimeString()}
+                                  {obs.createdAt.toLocaleString()}
                                 </span>
                               </div>
                               {getStatusBadge(obs.status)}

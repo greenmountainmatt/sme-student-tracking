@@ -4,6 +4,7 @@ export interface BehaviorEpisode {
   id: string;
   status: "on-task" | "off-task" | "transitioning";
   startTime: Date;
+  endTime?: Date;
   duration: number;
 }
 
@@ -15,7 +16,7 @@ export interface Prompt {
 
 export interface Observation {
   id: string;
-  timestamp: Date;
+  createdAt: Date;
   lastModified?: Date;
   observer: string;
   student: string;
@@ -42,11 +43,13 @@ export const useObservations = () => {
       const parsed = JSON.parse(saved);
       const withDates = parsed.map((obs: any) => ({
         ...obs,
-        timestamp: new Date(obs.timestamp),
+        // Handle legacy timestamp field
+        createdAt: new Date(obs.createdAt || obs.timestamp),
         lastModified: obs.lastModified ? new Date(obs.lastModified) : undefined,
         episodes: obs.episodes?.map((ep: any) => ({
           ...ep,
           startTime: new Date(ep.startTime),
+          endTime: ep.endTime ? new Date(ep.endTime) : undefined,
         })),
         context: {
           ...obs.context,

@@ -1,14 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useObservations } from "@/hooks/useObservations";
 import { ObservationListItem } from "@/components/observation/ObservationListItem";
 import { EditObservationDialog } from "@/components/observation/EditObservationDialog";
 import { DeleteConfirmDialog } from "@/components/observation/DeleteConfirmDialog";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Observation } from "@/hooks/useObservations";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+
+type DateFilter = "today" | "yesterday" | "week" | "month" | "all" | "custom";
 
 const Observations = () => {
   const navigate = useNavigate();
@@ -16,12 +20,58 @@ const Observations = () => {
   const [editingObservation, setEditingObservation] = useState<Observation | null>(null);
   const [deletingObservation, setDeletingObservation] = useState<Observation | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState<DateFilter>(() => {
+    const saved = localStorage.getItem("observationsDateFilter");
+    return (saved as DateFilter) || "all";
+  });
+  const [customStartDate, setCustomStartDate] = useState<string>("");
+  const [customEndDate, setCustomEndDate] = useState<string>("");
+
+  useEffect(() => {
+    localStorage.setItem("observationsDateFilter", dateFilter);
+  }, [dateFilter]);
+
+  const filteredObservations = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+    return observations.filter((obs) => {
+      const obsDate = new Date(obs.createdAt);
+      const obsDay = new Date(obsDate.getFullYear(), obsDate.getMonth(), obsDate.getDate());
+
+      switch (dateFilter) {
+        case "today":
+          return obsDay.getTime() === today.getTime();
+        case "yesterday":
+          return obsDay.getTime() === yesterday.getTime();
+        case "week":
+          return obsDate >= weekAgo;
+        case "month":
+          return obsDate >= monthAgo;
+        case "custom":
+          if (!customStartDate || !customEndDate) return true;
+          const start = new Date(customStartDate);
+          const end = new Date(customEndDate);
+          end.setHours(23, 59, 59, 999);
+          return obsDate >= start && obsDate <= end;
+        case "all":
+        default:
+          return true;
+      }
+    });
+  }, [observations, dateFilter, customStartDate, customEndDate]);
 
   const ITEMS_PER_PAGE = 50;
-  const totalPages = Math.ceil(observations.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredObservations.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const displayedObservations = observations.slice(startIndex, endIndex);
+  const displayedObservations = filteredObservations.slice(startIndex, endIndex);
 
   const confirmDelete = () => {
     if (deletingObservation) {
@@ -44,10 +94,91 @@ const Observations = () => {
           <div>
             <h1 className="text-3xl font-bold">All Observations</h1>
             <p className="text-muted-foreground">
-              Viewing {displayedObservations.length} of {observations.length} total observations
+              Viewing {displayedObservations.length} of {filteredObservations.length} observations
             </p>
           </div>
         </div>
+
+        {/* Date Filter Controls */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              <CardTitle>Filter by Date</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Badge
+                variant={dateFilter === "today" ? "default" : "outline"}
+                className="cursor-pointer px-4 py-2"
+                onClick={() => setDateFilter("today")}
+              >
+                Today
+              </Badge>
+              <Badge
+                variant={dateFilter === "yesterday" ? "default" : "outline"}
+                className="cursor-pointer px-4 py-2"
+                onClick={() => setDateFilter("yesterday")}
+              >
+                Yesterday
+              </Badge>
+              <Badge
+                variant={dateFilter === "week" ? "default" : "outline"}
+                className="cursor-pointer px-4 py-2"
+                onClick={() => setDateFilter("week")}
+              >
+                This Week
+              </Badge>
+              <Badge
+                variant={dateFilter === "month" ? "default" : "outline"}
+                className="cursor-pointer px-4 py-2"
+                onClick={() => setDateFilter("month")}
+              >
+                This Month
+              </Badge>
+              <Badge
+                variant={dateFilter === "all" ? "default" : "outline"}
+                className="cursor-pointer px-4 py-2"
+                onClick={() => setDateFilter("all")}
+              >
+                All Time
+              </Badge>
+              <Badge
+                variant={dateFilter === "custom" ? "default" : "outline"}
+                className="cursor-pointer px-4 py-2"
+                onClick={() => setDateFilter("custom")}
+              >
+                Custom Range
+              </Badge>
+            </div>
+
+            {dateFilter === "custom" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">From</label>
+                  <Input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">To</label>
+                  <Input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              Showing {filteredObservations.length} observation{filteredObservations.length !== 1 ? "s" : ""}
+            </p>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -66,11 +197,11 @@ const Observations = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[calc(100vh-280px)]">
+            <ScrollArea className="h-[calc(100vh-420px)]">
               <div className="space-y-2">
                 {displayedObservations.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
-                    No observations yet. Start recording to see them here.
+                    No observations found for this filter. Start recording to see them here.
                   </p>
                 ) : (
                   displayedObservations.map((observation) => (
@@ -95,7 +226,7 @@ const Observations = () => {
                   Previous
                 </Button>
                 <span className="text-sm text-muted-foreground px-4">
-                  {startIndex + 1}-{Math.min(endIndex, observations.length)} of {observations.length}
+                  {startIndex + 1}-{Math.min(endIndex, filteredObservations.length)} of {filteredObservations.length}
                 </span>
                 <Button
                   variant="outline"
@@ -123,7 +254,7 @@ const Observations = () => {
         onOpenChange={(open) => !open && setDeletingObservation(null)}
         onConfirm={confirmDelete}
         studentInitials={deletingObservation?.student || ""}
-        timestamp={deletingObservation?.timestamp || new Date()}
+        timestamp={deletingObservation?.createdAt || new Date()}
       />
     </div>
   );

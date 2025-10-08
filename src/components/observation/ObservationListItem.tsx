@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trash2, Edit } from "lucide-react";
 import { Observation } from "@/hooks/useObservations";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface ObservationListItemProps {
   observation: Observation;
@@ -29,15 +29,44 @@ export const ObservationListItem = ({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "on-task":
-        return <Badge className="bg-status-on-task">On-Task</Badge>;
+        return <Badge className="bg-success text-success-foreground">On-Task</Badge>;
       case "off-task":
-        return <Badge className="bg-status-off-task">Off-Task</Badge>;
+        return <Badge className="bg-destructive text-destructive-foreground">Off-Task</Badge>;
       case "transitioning":
-        return <Badge className="bg-status-transitioning">Transitioning</Badge>;
+        return <Badge className="bg-warning text-warning-foreground">Transitioning</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
   };
+
+  // Calculate episode percentages
+  const episodeStats = useMemo(() => {
+    if (!observation.episodes || observation.episodes.length === 0) {
+      return null;
+    }
+
+    const totalEpisodeTime = observation.episodes.reduce((sum, ep) => sum + ep.duration, 0);
+    const onTaskTime = observation.episodes
+      .filter((ep) => ep.status === "on-task")
+      .reduce((sum, ep) => sum + ep.duration, 0);
+    const offTaskTime = observation.episodes
+      .filter((ep) => ep.status === "off-task")
+      .reduce((sum, ep) => sum + ep.duration, 0);
+    const transitionTime = observation.episodes
+      .filter((ep) => ep.status === "transitioning")
+      .reduce((sum, ep) => sum + ep.duration, 0);
+
+    const onTaskPercent = totalEpisodeTime > 0 ? Math.round((onTaskTime / totalEpisodeTime) * 100) : 0;
+    const offTaskPercent = totalEpisodeTime > 0 ? Math.round((offTaskTime / totalEpisodeTime) * 100) : 0;
+    const transitionPercent = totalEpisodeTime > 0 ? Math.round((transitionTime / totalEpisodeTime) * 100) : 0;
+
+    return {
+      onTaskPercent,
+      offTaskPercent,
+      transitionPercent,
+      totalEpisodeTime,
+    };
+  }, [observation.episodes]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
@@ -58,7 +87,7 @@ export const ObservationListItem = ({
   return (
     <div className="relative overflow-hidden">
       <div
-        className={`flex items-center justify-between p-4 border rounded-lg bg-card transition-transform duration-200 cursor-pointer hover:bg-accent/50 ${
+        className={`flex flex-col p-4 border rounded-lg bg-card transition-transform duration-200 cursor-pointer hover:bg-accent/50 ${
           isSwipedLeft ? "-translate-x-20" : ""
         }`}
         onClick={() => !isSwipedLeft && onEdit(observation)}
@@ -66,46 +95,85 @@ export const ObservationListItem = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="font-semibold">{observation.student}</span>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3 flex-wrap flex-1">
+            <span className="font-semibold text-lg">{observation.student}</span>
             <span className="text-sm text-muted-foreground">
-              {format(observation.timestamp, "MM/dd HH:mm")}
+              {format(observation.createdAt, "MM/dd/yyyy HH:mm:ss")}
             </span>
-            <span className="font-mono text-sm">{formatDuration(observation.duration)}</span>
+            <span className="font-mono text-base font-medium">{formatDuration(observation.duration)}</span>
             {getStatusBadge(observation.status)}
           </div>
-          <div className="text-sm text-muted-foreground">
-            Observer: {observation.observer}
-            {observation.lastModified && (
-              <span className="ml-2 italic">• Edited</span>
-            )}
+
+          <div className="flex gap-2 ml-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(observation);
+              }}
+              className="hidden sm:flex"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(observation);
+              }}
+              className="hidden sm:flex text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
-        <div className="flex gap-2 ml-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(observation);
-            }}
-            className="hidden sm:flex"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(observation);
-            }}
-            className="hidden sm:flex text-destructive hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+        {/* Episode Stats Bar */}
+        {episodeStats && (
+          <div className="space-y-2 mb-2">
+            <div className="flex gap-4 text-xs font-medium">
+              <span className="text-success">ON TASK: {episodeStats.onTaskPercent}%</span>
+              <span className="text-destructive">OFF TASK: {episodeStats.offTaskPercent}%</span>
+              {episodeStats.transitionPercent > 0 && (
+                <span className="text-warning">TRANSITION: {episodeStats.transitionPercent}%</span>
+              )}
+            </div>
+            <div className="flex h-3 rounded-full overflow-hidden bg-muted">
+              {episodeStats.onTaskPercent > 0 && (
+                <div
+                  className="bg-success"
+                  style={{ width: `${episodeStats.onTaskPercent}%` }}
+                />
+              )}
+              {episodeStats.offTaskPercent > 0 && (
+                <div
+                  className="bg-destructive"
+                  style={{ width: `${episodeStats.offTaskPercent}%` }}
+                />
+              )}
+              {episodeStats.transitionPercent > 0 && (
+                <div
+                  className="bg-warning"
+                  style={{ width: `${episodeStats.transitionPercent}%` }}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="text-sm text-muted-foreground flex items-center gap-2">
+          <span>Observer: {observation.observer}</span>
+          {observation.lastModified && (
+            <span className="italic text-xs">
+              • Last edited {format(observation.lastModified, "MM/dd HH:mm")}
+            </span>
+          )}
+          {observation.episodes && observation.episodes.length > 0 && (
+            <span className="text-xs">• {observation.episodes.length} episode{observation.episodes.length !== 1 ? "s" : ""}</span>
+          )}
         </div>
       </div>
 
