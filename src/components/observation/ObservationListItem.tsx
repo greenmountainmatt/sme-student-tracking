@@ -131,34 +131,14 @@ export const ObservationListItem = ({
           </div>
         </div>
 
-        {/* Episode Stats Bar */}
+        {/* Episode Stats - Text Only */}
         {episodeStats && (
-          <div className="space-y-2 mb-2">
+          <div className="mb-2">
             <div className="flex gap-4 text-xs font-medium">
               <span className="text-success">ON TASK: {episodeStats.onTaskPercent}%</span>
               <span className="text-destructive">OFF TASK: {episodeStats.offTaskPercent}%</span>
               {episodeStats.transitionPercent > 0 && (
                 <span className="text-warning">TRANSITION: {episodeStats.transitionPercent}%</span>
-              )}
-            </div>
-            <div className="flex h-3 rounded-full overflow-hidden bg-muted">
-              {episodeStats.onTaskPercent > 0 && (
-                <div
-                  className="bg-success"
-                  style={{ width: `${episodeStats.onTaskPercent}%` }}
-                />
-              )}
-              {episodeStats.offTaskPercent > 0 && (
-                <div
-                  className="bg-destructive"
-                  style={{ width: `${episodeStats.offTaskPercent}%` }}
-                />
-              )}
-              {episodeStats.transitionPercent > 0 && (
-                <div
-                  className="bg-warning"
-                  style={{ width: `${episodeStats.transitionPercent}%` }}
-                />
               )}
             </div>
           </div>

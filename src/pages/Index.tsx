@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, List } from "lucide-react";
+import { ClipboardList, List, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useObservations } from "@/hooks/useObservations";
 
@@ -110,12 +110,18 @@ const Index = () => {
               <p className="text-sm text-muted-foreground">Real-time classroom data collection</p>
             </div>
           </div>
-          {observer && (
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground">Observer</p>
-              <p className="text-sm font-semibold">{observer}</p>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/reports")}>
+              <FileText className="h-4 w-4 mr-2" />
+              Reports
+            </Button>
+            {observer && (
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Observer</p>
+                <p className="text-sm font-semibold">{observer}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Observer Identification */}
