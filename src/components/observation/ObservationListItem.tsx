@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Edit } from "lucide-react";
 import { Observation } from "@/hooks/useObservations";
 import { useState, useMemo } from "react";
+import { calculateObservationStats } from "@/lib/calculateObservationStats";
 
 interface ObservationListItemProps {
   observation: Observation;
@@ -39,34 +40,8 @@ export const ObservationListItem = ({
     }
   };
 
-  // Calculate episode percentages
-  const episodeStats = useMemo(() => {
-    if (!observation.episodes || observation.episodes.length === 0) {
-      return null;
-    }
-
-    const totalEpisodeTime = observation.episodes.reduce((sum, ep) => sum + ep.duration, 0);
-    const onTaskTime = observation.episodes
-      .filter((ep) => ep.status === "on-task")
-      .reduce((sum, ep) => sum + ep.duration, 0);
-    const offTaskTime = observation.episodes
-      .filter((ep) => ep.status === "off-task")
-      .reduce((sum, ep) => sum + ep.duration, 0);
-    const transitionTime = observation.episodes
-      .filter((ep) => ep.status === "transitioning")
-      .reduce((sum, ep) => sum + ep.duration, 0);
-
-    const onTaskPercent = totalEpisodeTime > 0 ? Math.round((onTaskTime / totalEpisodeTime) * 100) : 0;
-    const offTaskPercent = totalEpisodeTime > 0 ? Math.round((offTaskTime / totalEpisodeTime) * 100) : 0;
-    const transitionPercent = totalEpisodeTime > 0 ? Math.round((transitionTime / totalEpisodeTime) * 100) : 0;
-
-    return {
-      onTaskPercent,
-      offTaskPercent,
-      transitionPercent,
-      totalEpisodeTime,
-    };
-  }, [observation.episodes]);
+  // Calculate episode percentages using shared utility
+  const stats = useMemo(() => calculateObservationStats(observation), [observation]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
@@ -132,17 +107,15 @@ export const ObservationListItem = ({
         </div>
 
         {/* Episode Stats - Text Only */}
-        {episodeStats && (
-          <div className="mb-2">
-            <div className="flex gap-4 text-xs font-medium">
-              <span className="text-success">ON TASK: {episodeStats.onTaskPercent}%</span>
-              <span className="text-destructive">OFF TASK: {episodeStats.offTaskPercent}%</span>
-              {episodeStats.transitionPercent > 0 && (
-                <span className="text-warning">TRANSITION: {episodeStats.transitionPercent}%</span>
-              )}
-            </div>
+        <div className="mb-2">
+          <div className="flex gap-4 text-xs font-medium">
+            <span className="text-success">ON TASK: {stats.onTaskPercent}%</span>
+            <span className="text-destructive">OFF TASK: {stats.offTaskPercent}%</span>
+            {stats.transitionPercent > 0 && (
+              <span className="text-warning">TRANSITION: {stats.transitionPercent}%</span>
+            )}
           </div>
-        )}
+        </div>
 
         <div className="text-sm text-muted-foreground flex items-center gap-2">
           <span>Observer: {observation.observer}</span>

@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useObservations } from "@/hooks/useObservations";
 import { ReportWizard } from "@/components/reports/ReportWizard";
 import { ReportPreview } from "@/components/reports/ReportPreview";
+import { calculateObservationStats } from "@/lib/calculateObservationStats";
 
 export type ReportType = 
   | "individual-student"
@@ -76,22 +77,11 @@ const Reports = () => {
   };
 
   const generateReportData = (type: ReportType, observations: any[], filters: ReportFilters) => {
-    const calculateOnTaskPercentage = (obs: any) => {
-      if (!obs.episodes || obs.episodes.length === 0) {
-        return obs.status === "on-task" ? 100 : 0;
-      }
-      const totalTime = obs.episodes.reduce((sum: number, ep: any) => sum + ep.duration, 0);
-      const onTaskTime = obs.episodes
-        .filter((ep: any) => ep.status === "on-task")
-        .reduce((sum: number, ep: any) => sum + ep.duration, 0);
-      return totalTime > 0 ? Math.round((onTaskTime / totalTime) * 100) : 0;
-    };
-
     const stats = {
       totalObservations: observations.length,
       averageOnTask: observations.length > 0
         ? Math.round(
-            observations.reduce((sum, obs) => sum + calculateOnTaskPercentage(obs), 0) /
+            observations.reduce((sum, obs) => sum + calculateObservationStats(obs).onTaskPercent, 0) /
               observations.length
           )
         : 0,
@@ -110,7 +100,7 @@ const Reports = () => {
             totalObservations: studentObs.length,
             averageOnTask: studentObs.length > 0
               ? Math.round(
-                  studentObs.reduce((sum, obs) => sum + calculateOnTaskPercentage(obs), 0) /
+                  studentObs.reduce((sum, obs) => sum + calculateObservationStats(obs).onTaskPercent, 0) /
                     studentObs.length
                 )
               : 0,
@@ -142,7 +132,7 @@ const Reports = () => {
             observer,
             count: obs.length,
             avgOnTask: Math.round(
-              obs.reduce((sum: number, o: any) => sum + calculateOnTaskPercentage(o), 0) / obs.length
+              obs.reduce((sum: number, o: any) => sum + calculateObservationStats(o).onTaskPercent, 0) / obs.length
             ),
           })),
           observations,
@@ -164,7 +154,7 @@ const Reports = () => {
             activity,
             count: obs.length,
             avgOnTask: Math.round(
-              obs.reduce((sum: number, o: any) => sum + calculateOnTaskPercentage(o), 0) / obs.length
+              obs.reduce((sum: number, o: any) => sum + calculateObservationStats(o).onTaskPercent, 0) / obs.length
             ),
           })),
           observations,
@@ -186,7 +176,7 @@ const Reports = () => {
             location,
             count: obs.length,
             avgOnTask: Math.round(
-              obs.reduce((sum: number, o: any) => sum + calculateOnTaskPercentage(o), 0) / obs.length
+              obs.reduce((sum: number, o: any) => sum + calculateObservationStats(o).onTaskPercent, 0) / obs.length
             ),
           })),
           observations,
