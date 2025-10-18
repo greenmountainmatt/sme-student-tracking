@@ -132,7 +132,54 @@ export function ObservationTimer({
       toast.error("Please end the current episode first");
       return;
     }
-    onTimerEnd(elapsedTime, episodes);
+    // Validate and finalize episodes before saving
+    // 1) Drop invalid episodes (non-positive duration)
+    let finalizedEpisodes: BehaviorEpisode[] = episodes.filter((ep) => ep.duration > 0);
+
+    // 2) Ensure total episode time does not exceed elapsed time
+    let episodeTime = finalizedEpisodes.reduce((sum, ep) => sum + ep.duration, 0);
+    if (episodeTime > elapsedTime) {
+      const overflow = episodeTime - elapsedTime;
+      toast.info(`Episode durations exceed total by ${overflow}s. Trimming to fit.`);
+      // Trim from the last recorded episodes backwards until we fit into elapsedTime
+      const trimmed: BehaviorEpisode[] = [...finalizedEpisodes];
+      let remainingOverflow = overflow;
+      for (let i = trimmed.length - 1; i >= 0 && remainingOverflow > 0; i--) {
+        const reducible = Math.min(trimmed[i].duration, remainingOverflow);
+        trimmed[i] = {
+          ...trimmed[i],
+          duration: trimmed[i].duration - reducible,
+          endTime: new Date(
+            trimmed[i].startTime.getTime() + (trimmed[i].duration - reducible) * 1000
+          ),
+        };
+        remainingOverflow -= reducible;
+      }
+      finalizedEpisodes = trimmed.filter((ep) => ep.duration > 0);
+      episodeTime = finalizedEpisodes.reduce((sum, ep) => sum + ep.duration, 0);
+    }
+
+    // 3) Add primary status episode for any unaccounted time
+    const primaryDuration = Math.max(0, elapsedTime - episodeTime);
+    if (primaryDuration > 0 && currentStatus) {
+      const primaryEpisode: BehaviorEpisode = {
+        id: `primary-${Date.now()}`,
+        status: currentStatus,
+        startTime: new Date(Date.now() - elapsedTime * 1000), // Approximate observation start
+        endTime: new Date(),
+        duration: primaryDuration,
+      };
+      finalizedEpisodes = [...finalizedEpisodes, primaryEpisode];
+      toast.info(
+        `Added primary ${currentStatus.replace("-", " ")} episode of ${primaryDuration}s to complete observation.`
+      );
+    }
+
+    // 4) Sort episodes by start time for consistency
+    finalizedEpisodes.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+
+    // 5) Save
+    onTimerEnd(elapsedTime, finalizedEpisodes);
     setElapsedTime(0);
     setEpisodes([]);
     toast.success("Observation saved");
