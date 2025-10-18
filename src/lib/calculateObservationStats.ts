@@ -21,6 +21,17 @@ export function calculateObservationStats(observation: Observation): Observation
   // Case 1: Episodes exist - use episode data for accurate calculation
   if (observation.episodes && observation.episodes.length > 0) {
     const totalTime = observation.episodes.reduce((sum, ep) => sum + ep.duration, 0);
+
+    // Validation: episode totals vs observation duration (allow small tolerance)
+    const toleranceSeconds = 2;
+    if (typeof observation.duration === "number") {
+      const delta = Math.abs(totalTime - observation.duration);
+      if (delta > toleranceSeconds) {
+        console.warn(
+          `Episode duration mismatch for observation ${observation.id}: total ${observation.duration}s, episodes ${totalTime}s (Δ=${delta}s)`
+        );
+      }
+    }
     const onTaskTime = observation.episodes
       .filter((ep) => ep.status === "on-task")
       .reduce((sum, ep) => sum + ep.duration, 0);
