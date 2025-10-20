@@ -78,6 +78,11 @@ export const ObservationListItem = ({
             </span>
             <span className="font-mono text-base font-medium">{formatDuration(observation.duration)}</span>
             {getStatusBadge(observation.status)}
+            {observation.behavior && (
+              <Badge variant="outline" className="border-accent text-accent">
+                {observation.behavior}
+              </Badge>
+            )}
           </div>
 
           <div className="flex gap-2 ml-4">
@@ -119,6 +124,7 @@ export const ObservationListItem = ({
 
         <div className="text-sm text-muted-foreground flex items-center gap-2">
           <span>Observer: {observation.observer}</span>
+          {observation.behavior && <span>• Behavior: {observation.behavior}</span>}
           {observation.lastModified && (
             <span className="italic text-xs">
               • Last edited {format(observation.lastModified, "MM/dd HH:mm")}

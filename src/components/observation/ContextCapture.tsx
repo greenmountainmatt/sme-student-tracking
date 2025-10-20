@@ -27,6 +27,7 @@ interface ContextData {
   why: string;
   notes: string;
   prompts?: Prompt[];
+  behavior?: string;
 }
 
 interface ContextCaptureProps {
@@ -67,6 +68,8 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
   const [whyOther, setWhyOther] = useState("");
   const [promptOther, setPromptOther] = useState("");
   const [selectedPrompts, setSelectedPrompts] = useState<{type: string, effectiveness?: string}[]>([]);
+  const [behavior, setBehavior] = useState<string>("");
+  const [behaviorOther, setBehaviorOther] = useState<string>("");
 
   useEffect(() => {
     onContextChange(context);
@@ -117,6 +120,12 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
     }));
     setContext((prev) => ({ ...prev, prompts: promptsWithTimestamps }));
   }, [selectedPrompts, promptOther]);
+
+  // Keep top-level behavior in context up to date
+  useEffect(() => {
+    const resolved = behavior === "Other" && behaviorOther ? behaviorOther : behavior;
+    setContext((prev) => ({ ...prev, behavior: resolved }));
+  }, [behavior, behaviorOther]);
 
   const getSummaryText = () => {
     const parts = [
@@ -372,6 +381,43 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
                 className="mt-2"
               />
             )}
+          </div>
+
+          {/* BEHAVIOR - Behavior Observed (Required) */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Behavior Observed <span className="text-destructive">*</span>
+            </Label>
+            <div className="grid md:grid-cols-2 gap-2">
+              <Select value={behavior} onValueChange={setBehavior}>
+                <SelectTrigger className="h-12 text-base">
+                  <SelectValue placeholder="Select behavior" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  <SelectItem value="Verbal Outburst">Verbal Outburst</SelectItem>
+                  <SelectItem value="Physical Aggression">Physical Aggression</SelectItem>
+                  <SelectItem value="Off-Task Behavior">Off-Task Behavior</SelectItem>
+                  <SelectItem value="Compliance">Compliance</SelectItem>
+                  <SelectItem value="Self-Injury">Self-Injury</SelectItem>
+                  <SelectItem value="Tantrum">Tantrum</SelectItem>
+                  <SelectItem value="Withdrawal">Withdrawal</SelectItem>
+                  <SelectItem value="Positive Participation">Positive Participation</SelectItem>
+                  <SelectItem value="Disruptive Behavior">Disruptive Behavior</SelectItem>
+                  <SelectItem value="Attention Seeking">Attention Seeking</SelectItem>
+                  <SelectItem value="Fidgeting">Fidgeting</SelectItem>
+                  <SelectItem value="Spitting">Spitting</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              {behavior === "Other" && (
+                <Input
+                  placeholder="Specify behavior..."
+                  value={behaviorOther}
+                  onChange={(e) => setBehaviorOther(e.target.value)}
+                  className="h-12 text-base"
+                />
+              )}
+            </div>
           </div>
 
           {/* Notes */}

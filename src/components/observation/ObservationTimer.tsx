@@ -16,6 +16,7 @@ interface ObservationTimerProps {
   isPaused: boolean;
   observer: string;
   student: string;
+  hasBehavior: boolean;
 }
 
 export function ObservationTimer({
@@ -28,6 +29,7 @@ export function ObservationTimer({
   isPaused,
   observer,
   student,
+  hasBehavior,
 }: ObservationTimerProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -105,6 +107,10 @@ export function ObservationTimer({
     }
     if (!student) {
       toast.error("Please enter student initials");
+      return;
+    }
+    if (!hasBehavior) {
+      toast.error("Please select Behavior Observed");
       return;
     }
     if (!currentStatus) {
@@ -216,18 +222,26 @@ export function ObservationTimer({
   };
 
   return (
-    <Card className="border-2">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-center flex-1">Observation Timer</CardTitle>
+    <Card className="border-2 overflow-hidden">
+      <div className="bg-gradient-to-r from-primary to-accent p-6">
+        <div className="flex items-center justify-between text-primary-foreground">
+          <CardTitle className="text-center flex-1 text-2xl md:text-3xl">Observation Timer</CardTitle>
           {wakeLock && (
-            <div className="flex items-center gap-1 text-xs text-success">
+            <div className="flex items-center gap-1 text-xs text-white/90">
               <Zap className="h-3 w-3" />
               Wake Lock Active
             </div>
           )}
         </div>
-      </CardHeader>
+        <div className="flex flex-col items-center justify-center py-6">
+          <div className="text-6xl md:text-7xl font-extrabold text-white drop-shadow-sm tabular-nums">
+            {formatTime(elapsedTime)}
+          </div>
+          {isPaused && (
+            <div className="text-sm text-white/90 font-medium mt-2">PAUSED</div>
+          )}
+        </div>
+      </div>
       <CardContent className="space-y-6">
         {/* Episode Timer */}
         {isRunning && episodeStatus && (
@@ -315,15 +329,7 @@ export function ObservationTimer({
           </div>
         </div>
 
-        {/* Timer Display */}
-        <div className="flex flex-col items-center justify-center py-8 space-y-4">
-          <div className="text-6xl font-bold text-timer-display tabular-nums">
-            {formatTime(elapsedTime)}
-          </div>
-          {isPaused && (
-            <div className="text-sm text-warning font-medium">PAUSED</div>
-          )}
-        </div>
+        {/* Timer Display moved to hero header above */}
 
         {/* Timer Controls */}
         <div className="space-y-3">
@@ -332,7 +338,7 @@ export function ObservationTimer({
               <Button
                 variant="success"
                 size="xl"
-                className="w-full"
+                className="w-full bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 active:scale-[0.98]"
                 onClick={handleStart}
                 disabled={!observer || !student}
               >
@@ -350,6 +356,7 @@ export function ObservationTimer({
               <Button
                 variant={isPaused ? "success" : "warning"}
                 size="xl"
+                className="h-16 rounded-full font-semibold active:scale-[0.98]"
                 onClick={handlePauseResume}
               >
                 {isPaused ? (
@@ -364,11 +371,7 @@ export function ObservationTimer({
                   </>
                 )}
               </Button>
-              <Button
-                variant="destructive"
-                size="xl"
-                onClick={handleEnd}
-              >
+              <Button variant="destructive" size="xl" className="h-16 rounded-full font-semibold active:scale-[0.98]" onClick={handleEnd}>
                 <Square className="mr-2" />
                 END
               </Button>

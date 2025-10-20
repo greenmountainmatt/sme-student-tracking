@@ -50,6 +50,20 @@ export const ReportPreview = ({ report }: ReportPreviewProps) => {
       });
     }
 
+    // Detailed observations table
+    if (report.observations) {
+      csv += "\nObservations\n";
+      csv += "Student,Date,Behavior,Duration,On-Task %,Off-Task %,Observer\n";
+      report.observations.forEach((obs: any) => {
+        const created = new Date(obs.createdAt).toLocaleString();
+        const duration = `${Math.floor(obs.duration / 60)}m ${obs.duration % 60}s`;
+        const onTask = obs.__stats?.onTaskPercent ?? "";
+        const offTask = obs.__stats?.offTaskPercent ?? "";
+        const behavior = obs.behavior || obs.context?.behavior || "";
+        csv += `${obs.student},${created},${behavior},${duration},${onTask},${offTask},${obs.observer}\n`;
+      });
+    }
+
     // Download
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
@@ -266,13 +280,29 @@ export const ReportPreview = ({ report }: ReportPreviewProps) => {
                       {new Date(obs.createdAt).toLocaleString()}
                     </p>
                   </div>
-                  <p className="text-sm">
-                    Duration: {formatDuration(obs.duration)}
-                  </p>
+                  <div className="text-right space-y-1">
+                    <p className="text-sm">Duration: {formatDuration(obs.duration)}</p>
+                    {obs.__stats && (
+                      <p className="text-xs">
+                        <span className="text-green-600 font-medium">On:</span> {obs.__stats.onTaskPercent}%
+                        {" "}
+                        <span className="text-red-600 font-medium">Off:</span> {obs.__stats.offTaskPercent}%
+                        {obs.__stats.transitionPercent > 0 && (
+                          <>
+                            {" "}
+                            <span className="text-yellow-600 font-medium">Trans:</span> {obs.__stats.transitionPercent}%
+                          </>
+                        )}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-2 text-xs">
                   <p>
                     <span className="font-medium">Observer:</span> {obs.observer}
+                  </p>
+                  <p>
+                    <span className="font-medium">Behavior:</span> {obs.behavior || obs.context?.behavior || ""}
                   </p>
                   <p>
                     <span className="font-medium">Activity:</span> {obs.context.what}

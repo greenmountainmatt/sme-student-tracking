@@ -186,7 +186,7 @@ const Observations = () => {
               <div>
                 <CardTitle>Observation History</CardTitle>
                 <CardDescription>
-                  Tap any observation to edit. Swipe left on mobile or click the trash icon to delete.
+                  [Student] | [Date] | [Behavior] | [Duration] | [On/Off Task %] | [Observer]
                 </CardDescription>
               </div>
               {totalPages > 1 && (
