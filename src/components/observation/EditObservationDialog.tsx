@@ -112,15 +112,7 @@ export const EditObservationDialog = ({
     if (!observer.trim() || !student.trim()) {
       toast({
         title: "Validation Error",
-        description: "Observer, Student, and Behavior are required.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!behavior || (behavior === "Other" && !behaviorOther.trim())) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a behavior (or specify Other)",
+        description: "Observer and Student are required.",
         variant: "destructive",
       });
       return;
@@ -136,7 +128,7 @@ export const EditObservationDialog = ({
       onSave(observation.id, {
         observer: observer.trim(),
         student: student.trim(),
-        behavior: behavior === "Other" ? behaviorOther.trim() : behavior,
+        behavior: behavior && behavior !== "Other" ? behavior : (behavior === "Other" && behaviorOther.trim() ? behaviorOther.trim() : ""),
         status,
         duration,
         context: {
@@ -147,7 +139,7 @@ export const EditObservationDialog = ({
           why: why.trim(),
           notes: notes.trim(),
           prompts: promptsWithTimestamps,
-          behavior: behavior === "Other" ? behaviorOther.trim() : behavior,
+          behavior: behavior && behavior !== "Other" ? behavior : (behavior === "Other" && behaviorOther.trim() ? behaviorOther.trim() : ""),
         },
       });
       toast({
@@ -222,13 +214,13 @@ export const EditObservationDialog = ({
             />
           </div>
 
-        {/* Behavior Observed */}
+        {/* Behavior — optional. */}
         <div className="space-y-2">
-          <Label htmlFor="behavior">Behavior Observed *</Label>
+          <Label htmlFor="behavior">Behavior — optional.</Label>
           <div className="grid md:grid-cols-2 gap-2">
             <Select value={behavior} onValueChange={setBehavior}>
               <SelectTrigger id="behavior">
-                <SelectValue placeholder="Select behavior" />
+                <SelectValue placeholder="Select behavior (you can add this later)" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50">
                 <SelectItem value="Verbal Outburst">Verbal Outburst</SelectItem>

@@ -43,14 +43,13 @@ const Index = () => {
   const handleTimerEnd = (duration: number, episodes: any[]) => {
     if (!student || !currentStatus || !observer) return;
     const resolvedBehavior = currentContext?.behavior?.trim?.() || "";
-    if (!resolvedBehavior) return;
 
     const newObservation = {
       id: Date.now().toString(),
       createdAt: new Date(),
       observer,
       student,
-      behavior: resolvedBehavior,
+      behavior: resolvedBehavior || "Unspecified",
       status: currentStatus,
       duration,
       episodes,
@@ -62,7 +61,7 @@ const Index = () => {
         why: currentContext.why,
         notes: currentContext.notes || "",
         prompts: currentContext.prompts || [],
-        behavior: resolvedBehavior,
+        behavior: resolvedBehavior || "Unspecified",
       },
     };
 

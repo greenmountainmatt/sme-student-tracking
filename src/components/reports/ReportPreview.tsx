@@ -59,7 +59,7 @@ export const ReportPreview = ({ report }: ReportPreviewProps) => {
         const duration = `${Math.floor(obs.duration / 60)}m ${obs.duration % 60}s`;
         const onTask = obs.__stats?.onTaskPercent ?? "";
         const offTask = obs.__stats?.offTaskPercent ?? "";
-        const behavior = obs.behavior || obs.context?.behavior || "";
+        const behavior = obs.behavior || obs.context?.behavior || "Unspecified";
         csv += `${obs.student},${created},${behavior},${duration},${onTask},${offTask},${obs.observer}\n`;
       });
     }
@@ -302,7 +302,7 @@ export const ReportPreview = ({ report }: ReportPreviewProps) => {
                     <span className="font-medium">Observer:</span> {obs.observer}
                   </p>
                   <p>
-                    <span className="font-medium">Behavior:</span> {obs.behavior || obs.context?.behavior || ""}
+                    <span className="font-medium">Behavior:</span> {obs.behavior || obs.context?.behavior || "Unspecified"}
                   </p>
                   <p>
                     <span className="font-medium">Activity:</span> {obs.context.what}

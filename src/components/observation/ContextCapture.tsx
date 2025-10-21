@@ -383,15 +383,15 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
             )}
           </div>
 
-          {/* BEHAVIOR - Behavior Observed (Required) */}
+          {/* BEHAVIOR - Behavior Observed (Optional) */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">
-              Behavior Observed <span className="text-destructive">*</span>
+              Behavior — optional.
             </Label>
             <div className="grid md:grid-cols-2 gap-2">
               <Select value={behavior} onValueChange={setBehavior}>
                 <SelectTrigger className="h-12 text-base">
-                  <SelectValue placeholder="Select behavior" />
+                  <SelectValue placeholder="Select behavior (you can add this later)" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover z-50">
                   <SelectItem value="Verbal Outburst">Verbal Outburst</SelectItem>
@@ -418,6 +418,9 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
                 />
               )}
             </div>
+            {!behavior && (
+              <p className="text-xs text-muted-foreground">Use to tag ABC or episodes. You can add this later.</p>
+            )}
           </div>
 
           {/* Notes */}
