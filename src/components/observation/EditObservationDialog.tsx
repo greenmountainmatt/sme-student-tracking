@@ -18,6 +18,7 @@ import { Observation } from "@/hooks/useObservations";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface EditObservationDialogProps {
   open: boolean;
@@ -36,6 +37,8 @@ export const EditObservationDialog = ({
   const [student, setStudent] = useState("");
   const [status, setStatus] = useState<"on-task" | "off-task" | "transitioning">("on-task");
   const [duration, setDuration] = useState(0);
+  const [behavior, setBehavior] = useState<string>("");
+  const [behaviorOther, setBehaviorOther] = useState<string>("");
   const [who, setWho] = useState<string[]>([]);
   const [what, setWhat] = useState("");
   const [when, setWhen] = useState("");
@@ -50,6 +53,7 @@ export const EditObservationDialog = ({
       const data = {
         observer: observation.observer,
         student: observation.student,
+        behavior: observation.behavior || observation.context.behavior || "",
         status: observation.status,
         duration: observation.duration,
         who: observation.context.who,
@@ -63,6 +67,8 @@ export const EditObservationDialog = ({
       
       setObserver(data.observer);
       setStudent(data.student);
+      setBehavior(data.behavior);
+      setBehaviorOther("");
       setStatus(data.status);
       setDuration(data.duration);
       setWho(data.who);
@@ -106,7 +112,15 @@ export const EditObservationDialog = ({
     if (!observer.trim() || !student.trim()) {
       toast({
         title: "Validation Error",
-        description: "Observer and Student are required fields.",
+        description: "Observer, Student, and Behavior are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!behavior || (behavior === "Other" && !behaviorOther.trim())) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a behavior (or specify Other)",
         variant: "destructive",
       });
       return;
@@ -122,6 +136,7 @@ export const EditObservationDialog = ({
       onSave(observation.id, {
         observer: observer.trim(),
         student: student.trim(),
+        behavior: behavior === "Other" ? behaviorOther.trim() : behavior,
         status,
         duration,
         context: {
@@ -132,6 +147,7 @@ export const EditObservationDialog = ({
           why: why.trim(),
           notes: notes.trim(),
           prompts: promptsWithTimestamps,
+          behavior: behavior === "Other" ? behaviorOther.trim() : behavior,
         },
       });
       toast({
@@ -205,6 +221,40 @@ export const EditObservationDialog = ({
               maxLength={50}
             />
           </div>
+
+        {/* Behavior Observed */}
+        <div className="space-y-2">
+          <Label htmlFor="behavior">Behavior Observed *</Label>
+          <div className="grid md:grid-cols-2 gap-2">
+            <Select value={behavior} onValueChange={setBehavior}>
+              <SelectTrigger id="behavior">
+                <SelectValue placeholder="Select behavior" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50">
+                <SelectItem value="Verbal Outburst">Verbal Outburst</SelectItem>
+                <SelectItem value="Physical Aggression">Physical Aggression</SelectItem>
+                <SelectItem value="Off-Task Behavior">Off-Task Behavior</SelectItem>
+                <SelectItem value="Compliance">Compliance</SelectItem>
+                <SelectItem value="Self-Injury">Self-Injury</SelectItem>
+                <SelectItem value="Tantrum">Tantrum</SelectItem>
+                <SelectItem value="Withdrawal">Withdrawal</SelectItem>
+                <SelectItem value="Positive Participation">Positive Participation</SelectItem>
+                <SelectItem value="Disruptive Behavior">Disruptive Behavior</SelectItem>
+                <SelectItem value="Attention Seeking">Attention Seeking</SelectItem>
+                <SelectItem value="Fidgeting">Fidgeting</SelectItem>
+                <SelectItem value="Spitting">Spitting</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            {behavior === "Other" && (
+              <Input
+                placeholder="Specify behavior..."
+                value={behaviorOther}
+                onChange={(e) => setBehaviorOther(e.target.value)}
+              />
+            )}
+          </div>
+        </div>
 
           <div className="space-y-2">
             <Label htmlFor="status">Status *</Label>

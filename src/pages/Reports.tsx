@@ -36,7 +36,9 @@ const Reports = () => {
   const handleGenerateReport = () => {
     // Generate report based on type and filters
     const filtered = filterObservations(observations, reportFilters);
-    const report = generateReportData(selectedReportType!, filtered, reportFilters);
+    // Precompute and attach stats for export rows
+    const withStats = filtered.map((o) => ({ ...o, __stats: calculateObservationStats(o) }));
+    const report = generateReportData(selectedReportType!, withStats, reportFilters);
     setGeneratedReport(report);
     setShowPreview(true);
   };

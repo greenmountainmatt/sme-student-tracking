@@ -20,6 +20,8 @@ export interface Observation {
   lastModified?: Date;
   observer: string;
   student: string;
+  /** High-level behavior observed (single select or free text). */
+  behavior?: string;
   status: "on-task" | "off-task" | "transitioning";
   duration: number;
   episodes?: BehaviorEpisode[];
@@ -31,6 +33,11 @@ export interface Observation {
     why: string;
     notes: string;
     prompts?: Prompt[];
+    /**
+     * Optional duplicate of behavior for backward/forward compatibility with
+     * older context-centric implementations. Prefer top-level `behavior`.
+     */
+    behavior?: string;
   };
 }
 
@@ -43,6 +50,8 @@ export const useObservations = () => {
       const parsed = JSON.parse(saved);
       const withDates = parsed.map((obs: any) => ({
         ...obs,
+        // Backfill new behavior field from legacy data if present
+        behavior: obs.behavior || obs.context?.behavior || "",
         // Handle legacy timestamp field
         createdAt: new Date(obs.createdAt || obs.timestamp),
         lastModified: obs.lastModified ? new Date(obs.lastModified) : undefined,
@@ -61,6 +70,12 @@ export const useObservations = () => {
         },
       }));
       setObservations(withDates);
+      try {
+        // Persist migration to localStorage for backward compatibility
+        localStorage.setItem("observations", JSON.stringify(withDates));
+      } catch (e) {
+        // no-op if storage quota errors etc.
+      }
     }
   }, []);
 
