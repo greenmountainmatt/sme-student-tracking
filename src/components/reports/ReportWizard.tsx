@@ -130,10 +130,10 @@ export const ReportWizard = ({
             return (
               <Card
                 key={report.type}
-                className={`cursor-pointer transition-all hover:shadow-md ${
+                className={`cursor-pointer transition-colors ${
                   selectedReportType === report.type
-                    ? "border-primary bg-primary/5"
-                    : "hover:border-primary/50"
+                    ? "border-primary bg-secondary"
+                    : "hover:border-[hsl(var(--surface-800))]"
                 }`}
                 onClick={() => onReportTypeChange(report.type)}
               >
@@ -314,7 +314,7 @@ export const ReportWizard = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="bg-muted p-4 rounded-lg space-y-2">
+              <div className="bg-muted p-4 rounded-lg space-y-2 border elev-drop-1">
                 <p className="text-sm">
                   <span className="font-semibold">Report Type:</span>{" "}
                   {reportTypes.find((r) => r.type === selectedReportType)?.title}

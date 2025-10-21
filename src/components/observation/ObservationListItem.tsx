@@ -78,9 +78,13 @@ export const ObservationListItem = ({
             </span>
             <span className="font-mono text-base font-medium">{formatDuration(observation.duration)}</span>
             {getStatusBadge(observation.status)}
-            {observation.behavior && (
+            {(
+              observation.behavior && observation.behavior.trim() !== ""
+                ? observation.behavior
+                : "Unspecified"
+            ) && (
               <Badge variant="outline" className="border-accent text-accent">
-                {observation.behavior}
+                {observation.behavior && observation.behavior.trim() !== "" ? observation.behavior : "Unspecified"}
               </Badge>
             )}
           </div>

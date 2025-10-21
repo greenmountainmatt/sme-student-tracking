@@ -109,10 +109,7 @@ export function ObservationTimer({
       toast.error("Please enter student initials");
       return;
     }
-    if (!hasBehavior) {
-      toast.error("Please select Behavior Observed");
-      return;
-    }
+    // Behavior is optional; proceed even if not set
     if (!currentStatus) {
       toast.error("Please select a task status first");
       return;
@@ -223,7 +220,7 @@ export function ObservationTimer({
 
   return (
     <Card className="border-2 overflow-hidden">
-      <div className="bg-gradient-to-r from-primary to-accent p-6">
+      <div className="p-6 bg-primary text-primary-foreground border-b-2 border-[hsl(var(--primary-700))] elev-drop-2">
         <div className="flex items-center justify-between text-primary-foreground">
           <CardTitle className="text-center flex-1 text-2xl md:text-3xl">Observation Timer</CardTitle>
           {wakeLock && (
@@ -234,7 +231,7 @@ export function ObservationTimer({
           )}
         </div>
         <div className="flex flex-col items-center justify-center py-6">
-          <div className="text-6xl md:text-7xl font-extrabold text-white drop-shadow-sm tabular-nums">
+          <div className="text-6xl md:text-7xl font-extrabold text-primary-foreground tabular-nums">
             {formatTime(elapsedTime)}
           </div>
           {isPaused && (
@@ -338,7 +335,7 @@ export function ObservationTimer({
               <Button
                 variant="success"
                 size="xl"
-                className="w-full bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90 active:scale-[0.98]"
+                className="w-full elev-drop-2 active:translate-y-[2px]"
                 onClick={handleStart}
                 disabled={!observer || !student}
               >
@@ -356,7 +353,7 @@ export function ObservationTimer({
               <Button
                 variant={isPaused ? "success" : "warning"}
                 size="xl"
-                className="h-16 rounded-full font-semibold active:scale-[0.98]"
+                className="h-16 rounded-md font-semibold active:translate-y-[2px] elev-drop-2"
                 onClick={handlePauseResume}
               >
                 {isPaused ? (
@@ -371,7 +368,7 @@ export function ObservationTimer({
                   </>
                 )}
               </Button>
-              <Button variant="destructive" size="xl" className="h-16 rounded-full font-semibold active:scale-[0.98]" onClick={handleEnd}>
+              <Button variant="destructive" size="xl" className="h-16 rounded-md font-semibold active:translate-y-[2px] elev-drop-2" onClick={handleEnd}>
                 <Square className="mr-2" />
                 END
               </Button>
