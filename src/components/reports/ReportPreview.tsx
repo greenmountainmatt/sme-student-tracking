@@ -116,20 +116,20 @@ export const ReportPreview = ({ report }: ReportPreviewProps) => {
           <CardTitle>Summary Statistics</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-4">
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Total Observations</p>
-              <p className="text-3xl font-bold">{report.statistics.totalObservations}</p>
+              <p className="text-xs text-muted-foreground">Total Observations</p>
+              <p className="text-xl font-bold">{report.statistics.totalObservations}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Average On-Task</p>
-              <p className="text-3xl font-bold text-green-600">
+              <p className="text-xs text-muted-foreground">Average On-Task</p>
+              <p className="text-xl font-bold text-green-600">
                 {report.statistics.averageOnTask}%
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Total Duration</p>
-              <p className="text-3xl font-bold">
+              <p className="text-xs text-muted-foreground">Total Duration</p>
+              <p className="text-xl font-bold">
                 {formatDuration(report.statistics.totalDuration)}
               </p>
             </div>

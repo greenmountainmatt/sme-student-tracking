@@ -81,8 +81,8 @@ const Observations = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-4 md:p-5">
+      <div className="max-w-6xl mx-auto space-y-4">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -92,8 +92,8 @@ const Observations = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">All Observations</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl font-bold">All Observations</h1>
+            <p className="text-xs text-muted-foreground">
               Viewing {displayedObservations.length} of {filteredObservations.length} observations
             </p>
           </div>
@@ -111,42 +111,42 @@ const Observations = () => {
             <div className="flex flex-wrap gap-2">
               <Badge
                 variant={dateFilter === "today" ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2"
+                className="cursor-pointer px-3 py-1.5"
                 onClick={() => setDateFilter("today")}
               >
                 Today
               </Badge>
               <Badge
                 variant={dateFilter === "yesterday" ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2"
+                className="cursor-pointer px-3 py-1.5"
                 onClick={() => setDateFilter("yesterday")}
               >
                 Yesterday
               </Badge>
               <Badge
                 variant={dateFilter === "week" ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2"
+                className="cursor-pointer px-3 py-1.5"
                 onClick={() => setDateFilter("week")}
               >
                 This Week
               </Badge>
               <Badge
                 variant={dateFilter === "month" ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2"
+                className="cursor-pointer px-3 py-1.5"
                 onClick={() => setDateFilter("month")}
               >
                 This Month
               </Badge>
               <Badge
                 variant={dateFilter === "all" ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2"
+                className="cursor-pointer px-3 py-1.5"
                 onClick={() => setDateFilter("all")}
               >
                 All Time
               </Badge>
               <Badge
                 variant={dateFilter === "custom" ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2"
+                className="cursor-pointer px-3 py-1.5"
                 onClick={() => setDateFilter("custom")}
               >
                 Custom Range
@@ -190,15 +190,15 @@ const Observations = () => {
                 </CardDescription>
               </div>
               {totalPages > 1 && (
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-xs">
                   Page {currentPage} of {totalPages}
                 </div>
               )}
             </div>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[calc(100vh-420px)]">
-              <div className="space-y-2">
+            <ScrollArea className="h-[calc(100vh-360px)]">
+              <div className="divide-y">
                 {displayedObservations.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
                     No observations found for this filter. Start recording to see them here.

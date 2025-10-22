@@ -313,8 +313,8 @@ export const ReportWizard = ({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="bg-muted p-4 rounded-lg space-y-2 border">
+            <div className="space-y-3">
+              <div className="bg-muted p-3 rounded-md space-y-2 border">
                 <p className="text-sm">
                   <span className="font-semibold">Report Type:</span>{" "}
                   {reportTypes.find((r) => r.type === selectedReportType)?.title}

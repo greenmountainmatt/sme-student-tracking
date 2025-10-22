@@ -62,7 +62,7 @@ export const ObservationListItem = ({
   return (
     <div className="relative overflow-hidden">
       <div
-        className={`flex flex-col p-4 border rounded-lg bg-card transition-transform duration-200 cursor-pointer hover:bg-accent/50 ${
+        className={`flex flex-col p-3 border rounded-md bg-card transition-transform duration-150 cursor-pointer ${
           isSwipedLeft ? "-translate-x-20" : ""
         }`}
         onClick={() => !isSwipedLeft && onEdit(observation)}
@@ -72,18 +72,18 @@ export const ObservationListItem = ({
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3 flex-wrap flex-1">
-            <span className="font-semibold text-lg">{observation.student}</span>
-            <span className="text-sm text-muted-foreground">
+            <span className="font-semibold text-base">{observation.student}</span>
+            <span className="text-xs text-muted-foreground">
               {format(observation.createdAt, "MM/dd/yyyy HH:mm:ss")}
             </span>
-            <span className="font-mono text-base font-medium">{formatDuration(observation.duration)}</span>
+            <span className="font-mono text-sm font-medium">{formatDuration(observation.duration)}</span>
             {getStatusBadge(observation.status)}
             {(
               observation.behavior && observation.behavior.trim() !== ""
                 ? observation.behavior
                 : "Unspecified"
             ) && (
-              <Badge variant="outline" className="border-accent text-accent">
+              <Badge variant="outline" className="">
                 {observation.behavior && observation.behavior.trim() !== "" ? observation.behavior : "Unspecified"}
               </Badge>
             )}
@@ -117,7 +117,7 @@ export const ObservationListItem = ({
 
         {/* Episode Stats - Text Only */}
         <div className="mb-2">
-          <div className="flex gap-4 text-xs font-medium">
+          <div className="flex gap-3 text-xs font-medium">
             <span className="text-success">ON TASK: {stats.onTaskPercent}%</span>
             <span className="text-destructive">OFF TASK: {stats.offTaskPercent}%</span>
             {stats.transitionPercent > 0 && (
@@ -126,7 +126,7 @@ export const ObservationListItem = ({
           </div>
         </div>
 
-        <div className="text-sm text-muted-foreground flex items-center gap-2">
+        <div className="text-xs text-muted-foreground flex items-center gap-2">
           <span>Observer: {observation.observer}</span>
           {observation.behavior && <span>• Behavior: {observation.behavior}</span>}
           {observation.lastModified && (
