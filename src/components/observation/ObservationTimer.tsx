@@ -220,7 +220,7 @@ export function ObservationTimer({
 
   return (
     <Card className="border-2 overflow-hidden">
-      <div className="p-6 bg-primary text-primary-foreground border-b-2 border-[hsl(var(--primary-700))] elev-drop-2">
+      <div className="p-6 bg-primary text-primary-foreground border-b-2 border-[hsl(var(--primary-700))]">
         <div className="flex items-center justify-between text-primary-foreground">
           <CardTitle className="text-center flex-1 text-2xl md:text-3xl">Observation Timer</CardTitle>
           {wakeLock && (
@@ -335,7 +335,7 @@ export function ObservationTimer({
               <Button
                 variant="success"
                 size="xl"
-                className="w-full elev-drop-2 active:translate-y-[2px]"
+                className="w-full"
                 onClick={handleStart}
                 disabled={!observer || !student}
               >
@@ -353,7 +353,7 @@ export function ObservationTimer({
               <Button
                 variant={isPaused ? "success" : "warning"}
                 size="xl"
-                className="h-16 rounded-md font-semibold active:translate-y-[2px] elev-drop-2"
+                className="h-16 rounded-md font-semibold"
                 onClick={handlePauseResume}
               >
                 {isPaused ? (
@@ -368,7 +368,7 @@ export function ObservationTimer({
                   </>
                 )}
               </Button>
-              <Button variant="destructive" size="xl" className="h-16 rounded-md font-semibold active:translate-y-[2px] elev-drop-2" onClick={handleEnd}>
+              <Button variant="destructive" size="xl" className="h-16 rounded-md font-semibold" onClick={handleEnd}>
                 <Square className="mr-2" />
                 END
               </Button>

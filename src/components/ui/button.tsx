@@ -5,22 +5,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-solid",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors duration-150 ease-linear disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-solid",
   {
     variants: {
       variant: {
-        // Primary button: solid fill, bottom border for depth, hard-edged drop
-        default: "bg-primary text-primary-foreground border border-primary/0 shadow-none active:translate-y-[2px] elev-drop-2 active:elev-inset-1 disabled:bg-[hsl(var(--primary-200))] disabled:text-[hsl(var(--foreground))]/40",
-        destructive: "bg-destructive text-destructive-foreground border border-destructive shadow-none active:translate-y-[2px] elev-drop-2 active:elev-inset-1",
-        outline: "bg-background text-foreground border border-[hsl(var(--surface-700))] elev-drop-1 hover:border-[hsl(var(--surface-800))] active:translate-y-[2px] active:elev-inset-1",
-        secondary: "bg-secondary text-secondary-foreground border border-[hsl(var(--surface-700))] elev-drop-1 hover:border-[hsl(var(--surface-800))] active:translate-y-[2px] active:elev-inset-1",
-        ghost: "bg-background text-foreground border border-[hsl(var(--surface-700))] elev-drop-1 hover:border-[hsl(var(--surface-800))] active:translate-y-[2px] active:elev-inset-1",
+        // Primary: filled with consistent border; color-only state changes
+        default: "bg-[hsl(var(--button-primary-fill-default))] hover:bg-[hsl(var(--button-primary-fill-hover))] active:bg-[hsl(var(--button-primary-fill-active))] text-primary-foreground border border-[hsl(var(--button-primary-border))] shadow-none disabled:bg-[hsl(var(--button-primary-fill-disabled))] disabled:text-[hsl(var(--foreground))]/40",
+        destructive: "bg-destructive text-destructive-foreground border border-destructive shadow-none",
+        // Secondary/Outline: outlined with surface fill; color-only on hover/active
+        outline: "bg-[hsl(var(--button-secondary-fill-default))] text-foreground border border-[hsl(var(--button-secondary-border-default))] hover:border-[hsl(var(--button-secondary-border-hover))] active:bg-[hsl(var(--button-secondary-fill-active))]",
+        secondary: "bg-[hsl(var(--button-secondary-fill-default))] text-secondary-foreground border border-[hsl(var(--button-secondary-border-default))] hover:border-[hsl(var(--button-secondary-border-hover))] active:bg-[hsl(var(--button-secondary-fill-active))]",
+        ghost: "bg-background text-foreground border border-[hsl(var(--button-secondary-border-default))] hover:border-[hsl(var(--button-secondary-border-hover))] active:bg-[hsl(var(--button-secondary-fill-active))]",
         link: "text-primary underline-offset-4 hover:underline shadow-none border-0",
-        success: "bg-success text-success-foreground border border-[color:transparent] elev-drop-2 active:translate-y-[2px] active:elev-inset-1",
-        warning: "bg-warning text-warning-foreground border border-[color:transparent] elev-drop-2 active:translate-y-[2px] active:elev-inset-1",
-        "status-active": "bg-status-active text-white border-2 border-transparent elev-drop-1 data-[active=true]:outline data-[active=true]:outline-2 data-[active=true]:outline-[hsl(var(--status-active))]",
-        "status-inactive": "bg-status-inactive text-white border-2 border-transparent elev-drop-1 data-[active=true]:outline data-[active=true]:outline-2 data-[active=true]:outline-[hsl(var(--status-inactive))]",
-        "status-transition": "bg-status-transition text-warning-foreground border-2 border-transparent elev-drop-1 data-[active=true]:outline data-[active=true]:outline-2 data-[active=true]:outline-[hsl(var(--status-transition))]",
+        success: "bg-success text-success-foreground border border-[hsl(var(--surface-700))]",
+        warning: "bg-warning text-warning-foreground border border-[hsl(var(--surface-700))]",
+        "status-active": "bg-status-active text-white border-2 border-[hsl(var(--surface-700))]",
+        "status-inactive": "bg-status-inactive text-white border-2 border-[hsl(var(--surface-700))]",
+        "status-transition": "bg-status-transition text-warning-foreground border-2 border-[hsl(var(--surface-700))]",
       },
       size: {
         default: "h-10 px-4 py-2",
