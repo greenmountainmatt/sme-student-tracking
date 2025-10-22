@@ -130,7 +130,7 @@ export const ReportWizard = ({
             return (
               <Card
                 key={report.type}
-                className={`cursor-pointer transition-colors ${
+                className={`cursor-pointer transition-colors duration-150 ease-linear ${
                   selectedReportType === report.type
                     ? "border-primary bg-secondary"
                     : "hover:border-[hsl(var(--surface-800))]"
@@ -314,7 +314,7 @@ export const ReportWizard = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="bg-muted p-4 rounded-lg space-y-2 border elev-drop-1">
+              <div className="bg-muted p-4 rounded-lg space-y-2 border">
                 <p className="text-sm">
                   <span className="font-semibold">Report Type:</span>{" "}
                   {reportTypes.find((r) => r.type === selectedReportType)?.title}
