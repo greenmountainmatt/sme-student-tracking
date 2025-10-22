@@ -8,7 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Core palette (Gymshark x Airbnb) */
+    /* Core palette (Utilitarian classroom-first) */
     --background: 0 0% 100%; /* White */
     --foreground: 0 0% 10%; /* Deep charcoal (#1a1a1a) */
 
@@ -47,7 +47,7 @@ All colors MUST be HSL.
     --ring: 190 100% 50%;
 
     /* 8px radius */
-    --radius: 0.5rem;
+    --radius: 6px;
 
     --timer-display: 190 100% 40%;
     --status-active: 144 100% 39%;
@@ -75,7 +75,7 @@ All colors MUST be HSL.
     --text-on-primary: var(--primary-foreground);
 
     /* Focus outline tokens */
-    --focus-outline-color: var(--accent);
+    --focus-outline-color: var(--surface-700);
     --focus-outline-width: 2px;
     --focus-outline-offset: 2px;
 
@@ -168,12 +168,13 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "tnum" 1, "cv05" 1;
+    line-height: 1.4;
   }
 
   /* iPad Mini and small tablet optimizations */
   @media (min-width: 768px) and (max-width: 1024px) {
     html {
-      font-size: 18px; /* Increase base font size for iPad Mini */
+      font-size: 16px;
     }
     
     /* Ensure minimum touch target sizes */

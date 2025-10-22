@@ -47,7 +47,7 @@ export function StudentSelection({
           value={currentStudent}
           onChange={(e) => onStudentChange(e.target.value)}
           disabled={isTimerRunning}
-          className="text-base h-12"
+          className="text-sm h-10"
         />
       </CardContent>
     </Card>

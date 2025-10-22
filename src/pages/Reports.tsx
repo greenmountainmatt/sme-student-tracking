@@ -226,15 +226,15 @@ const Reports = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-4 md:p-5">
+      <div className="max-w-6xl mx-auto space-y-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Reports & Analytics</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl font-bold">Reports & Analytics</h1>
+            <p className="text-xs text-muted-foreground">
               Generate comprehensive reports from observation data
             </p>
           </div>

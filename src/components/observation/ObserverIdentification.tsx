@@ -38,7 +38,7 @@ export function ObserverIdentification({ onObserverChange }: ObserverIdentificat
             placeholder="Enter your name or initials"
             value={observer}
             onChange={(e) => handleChange(e.target.value)}
-            className="text-base h-12"
+            className="text-sm h-10"
           />
         </div>
       </CardContent>
