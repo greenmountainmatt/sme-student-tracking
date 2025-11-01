@@ -50,17 +50,28 @@ export const ReportPreview = ({ report }: ReportPreviewProps) => {
       });
     }
 
+    if (report.notesData) {
+      csv += "Date,Student,Observer,Status,Activity,Location,Duration,Notes\n";
+      report.notesData.forEach((d: any) => {
+        const date = new Date(d.date).toLocaleString();
+        const duration = `${Math.floor(d.duration / 60)}m ${d.duration % 60}s`;
+        const notes = (d.notes || "").replace(/"/g, '""'); // Escape quotes
+        csv += `"${date}","${d.student}","${d.observer}","${d.status}","${d.activity}","${d.location}","${duration}","${notes}"\n`;
+      });
+    }
+
     // Detailed observations table
     if (report.observations) {
       csv += "\nObservations\n";
-      csv += "Student,Date,Behavior,Duration,On-Task %,Off-Task %,Observer\n";
+      csv += "Student,Date,Behavior,Duration,On-Task %,Off-Task %,Observer,Notes\n";
       report.observations.forEach((obs: any) => {
         const created = new Date(obs.createdAt).toLocaleString();
         const duration = `${Math.floor(obs.duration / 60)}m ${obs.duration % 60}s`;
         const onTask = obs.__stats?.onTaskPercent ?? "";
         const offTask = obs.__stats?.offTaskPercent ?? "";
         const behavior = obs.behavior || obs.context?.behavior || "Unspecified";
-        csv += `${obs.student},${created},${behavior},${duration},${onTask},${offTask},${obs.observer}\n`;
+        const notes = (obs.context?.notes || "").replace(/"/g, '""');
+        csv += `${obs.student},"${created}",${behavior},${duration},${onTask},${offTask},${obs.observer},"${notes}"\n`;
       });
     }
 
@@ -259,6 +270,44 @@ export const ReportPreview = ({ report }: ReportPreviewProps) => {
         </Card>
       )}
 
+      {/* Observer Notes Data */}
+      {report.notesData && (
+        <Card className="print:shadow-none">
+          <CardHeader>
+            <CardTitle>Observer Notes</CardTitle>
+            <CardDescription>Observations with detailed notes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {report.notesData.map((d: any, index: number) => (
+                <div key={index} className="border-b pb-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="font-semibold">{d.student} - {d.status.toUpperCase()}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(d.date).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-right text-xs">
+                      <p><span className="font-medium">Observer:</span> {d.observer}</p>
+                      <p><span className="font-medium">Duration:</span> {formatDuration(d.duration)}</p>
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-2 text-xs mb-2">
+                    <p><span className="font-medium">Activity:</span> {d.activity}</p>
+                    <p><span className="font-medium">Location:</span> {d.location}</p>
+                  </div>
+                  <div className="bg-muted/50 p-3 rounded-md">
+                    <p className="text-sm font-medium mb-1">Notes:</p>
+                    <p className="text-sm whitespace-pre-wrap">{d.notes}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Detailed Observations List */}
       <Card className="print:shadow-none print:break-before-page">
         <CardHeader>
@@ -314,6 +363,11 @@ export const ReportPreview = ({ report }: ReportPreviewProps) => {
                     <span className="font-medium">When:</span> {obs.context.when}
                   </p>
                 </div>
+                {obs.context.notes && (
+                  <div className="mt-2 text-xs">
+                    <span className="font-medium">Notes:</span> {obs.context.notes}
+                  </div>
+                )}
               </div>
             ))}
             {report.observations.length > 50 && (

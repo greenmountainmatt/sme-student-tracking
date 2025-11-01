@@ -253,7 +253,7 @@ export function ObservationTimer({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 border-success text-success hover:bg-success/10"
+                className="flex-1 border-success text-success hover:bg-success/10 min-h-[44px]"
                 onClick={() => startEpisode("on-task")}
               >
                 Quick On Task
@@ -263,7 +263,7 @@ export function ObservationTimer({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 border-destructive text-destructive hover:bg-destructive/10"
+                className="flex-1 border-destructive text-destructive hover:bg-destructive/10 min-h-[44px]"
                 onClick={() => startEpisode("off-task")}
               >
                 Quick Off Task
@@ -273,7 +273,7 @@ export function ObservationTimer({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 border-warning text-warning hover:bg-warning/10"
+                className="flex-1 border-warning text-warning hover:bg-warning/10 min-h-[44px]"
                 onClick={() => startEpisode("transitioning")}
               >
                 Quick Transition
@@ -298,6 +298,7 @@ export function ObservationTimer({
               onClick={() => onStatusChange("on-task")}
               data-active={currentStatus === "on-task"}
               disabled={isRunning || !observer}
+              className="min-h-[48px]"
             >
               On Task
             </Button>
@@ -307,6 +308,7 @@ export function ObservationTimer({
               onClick={() => onStatusChange("off-task")}
               data-active={currentStatus === "off-task"}
               disabled={isRunning || !observer}
+              className="min-h-[48px]"
             >
               Off Task
             </Button>
@@ -316,6 +318,7 @@ export function ObservationTimer({
               onClick={() => onStatusChange("transitioning")}
               data-active={currentStatus === "transitioning"}
               disabled={isRunning || !observer}
+              className="min-h-[48px]"
             >
               Transitioning
             </Button>
@@ -331,7 +334,7 @@ export function ObservationTimer({
               <Button
                 variant="success"
                 size="lg"
-                className="w-full"
+                className="w-full min-h-[48px] text-base font-semibold"
                 onClick={handleStart}
                 disabled={!observer || !student}
               >
@@ -349,7 +352,7 @@ export function ObservationTimer({
               <Button
                 variant={isPaused ? "success" : "warning"}
                 size="lg"
-                className="h-12 rounded-md font-semibold"
+                className="h-12 min-h-[48px] rounded-md font-semibold"
                 onClick={handlePauseResume}
               >
                 {isPaused ? (
@@ -364,7 +367,7 @@ export function ObservationTimer({
                   </>
                 )}
               </Button>
-              <Button variant="destructive" size="lg" className="h-12 rounded-md font-semibold" onClick={handleEnd}>
+              <Button variant="destructive" size="lg" className="h-12 min-h-[48px] rounded-md font-semibold" onClick={handleEnd}>
                 <Square className="mr-2" />
                 END
               </Button>

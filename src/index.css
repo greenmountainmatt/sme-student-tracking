@@ -176,12 +176,16 @@ All colors MUST be HSL.
     html {
       font-size: 16px;
     }
-    
-    /* Ensure minimum touch target sizes */
-    button, a, [role="button"] {
-      min-height: 44px;
-      min-width: 44px;
-    }
+  }
+  
+  /* Ensure minimum touch target sizes for all interactive elements */
+  button, a, [role="button"], [role="tab"], [role="switch"] {
+    min-height: 44px;
+  }
+  
+  /* Badge buttons need touch targets too */
+  button.inline-flex {
+    min-width: 44px;
   }
 }
 
@@ -196,6 +200,17 @@ All colors MUST be HSL.
     transition-property: background-color, border-color, color;
     transition-duration: 150ms;
     transition-timing-function: linear;
+  }
+  
+  /* Touch target utility */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .touch-target-lg {
+    min-height: 48px;
+    min-width: 48px;
   }
 }
 

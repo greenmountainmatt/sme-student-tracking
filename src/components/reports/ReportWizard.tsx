@@ -69,6 +69,12 @@ export const ReportWizard = ({
       description: "Analysis of prompting strategies and their success rates",
       icon: MessageSquare,
     },
+    {
+      type: "observer-notes",
+      title: "Observer Notes Report",
+      description: "Search and filter observations with observer notes",
+      icon: FileText,
+    },
   ];
 
   // Extract unique values for filters

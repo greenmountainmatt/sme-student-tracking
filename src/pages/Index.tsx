@@ -23,6 +23,22 @@ const Index = () => {
   const [currentContext, setCurrentContext] = useState<any>(null);
   const [recentStudents, setRecentStudents] = useState<string[]>([]);
 
+  // Save active timer state to localStorage
+  useEffect(() => {
+    if (isTimerRunning) {
+      const timerState = {
+        isRunning: true,
+        isPaused: isTimerPaused,
+        student,
+        status: currentStatus,
+        observer,
+      };
+      localStorage.setItem("activeSession_primary", JSON.stringify(timerState));
+    } else {
+      localStorage.removeItem("activeSession_primary");
+    }
+  }, [isTimerRunning, isTimerPaused, student, currentStatus, observer]);
+
   // Load recent students from localStorage
   useEffect(() => {
     const savedRecent = localStorage.getItem("recentStudents");
@@ -31,7 +47,36 @@ const Index = () => {
     }
   }, []);
 
+  // Form reset handler - clears all fields at START of observation
+  const resetFormFields = () => {
+    setStudent("");
+    setCurrentContext({
+      who: [],
+      what: "Independent Work",
+      when: getCurrentTimeBlock(),
+      where: "Classroom",
+      why: "Unclear",
+      notes: "",
+      prompts: [],
+      behavior: "",
+    });
+  };
+
+  const getCurrentTimeBlock = () => {
+    const hour = new Date().getHours();
+    if (hour < 8.5) return "Warm-up";
+    if (hour < 10) return "Core Instruction";
+    if (hour < 11) return "Practice";
+    if (hour < 12) return "Centers";
+    if (hour < 13) return "Specials";
+    if (hour < 14) return "Core Instruction";
+    if (hour < 15) return "End of Day";
+    return "Transition";
+  };
+
   const handleTimerStart = () => {
+    // Clear all form fields at START
+    resetFormFields();
     setIsTimerRunning(true);
     setIsTimerPaused(false);
   };
@@ -75,11 +120,10 @@ const Index = () => {
     setRecentStudents(updatedRecent);
     localStorage.setItem("recentStudents", JSON.stringify(updatedRecent));
 
-    // Reset state
+    // Reset timer state only (form already cleared at start)
     setIsTimerRunning(false);
     setIsTimerPaused(false);
     setCurrentStatus(null);
-    setStudent("");
   };
 
   const formatDuration = (seconds: number) => {
@@ -173,6 +217,7 @@ const Index = () => {
               onContextChange={setCurrentContext}
               recentStudents={recentStudents}
               isTimerRunning={isTimerRunning}
+              shouldResetForm={!isTimerRunning}
             />
           </div>
 

@@ -32,7 +32,7 @@ export function StudentSelection({
               <Badge
                 key={student}
                 variant="outline"
-                className="cursor-pointer hover:bg-accent"
+                className="cursor-pointer hover:bg-accent min-h-[44px] px-4 text-sm"
                 onClick={() => !isTimerRunning && onStudentChange(student)}
               >
                 {student}
@@ -47,7 +47,7 @@ export function StudentSelection({
           value={currentStudent}
           onChange={(e) => onStudentChange(e.target.value)}
           disabled={isTimerRunning}
-          className="text-sm h-10"
+          className="text-sm h-12"
         />
       </CardContent>
     </Card>

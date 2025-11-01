@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { BehaviorSelector } from "./BehaviorSelector";
 
 export interface Prompt {
   type: string;
@@ -34,6 +35,7 @@ interface ContextCaptureProps {
   onContextChange: (context: ContextData) => void;
   recentStudents: string[];
   isTimerRunning: boolean;
+  shouldResetForm?: boolean;
 }
 
 const getCurrentTimeBlock = () => {
@@ -48,7 +50,7 @@ const getCurrentTimeBlock = () => {
   return "Transition";
 };
 
-export function ContextCapture({ onContextChange, recentStudents, isTimerRunning }: ContextCaptureProps) {
+export function ContextCapture({ onContextChange, recentStudents, isTimerRunning, shouldResetForm }: ContextCaptureProps) {
   const [isExpanded, setIsExpanded] = useState(() => {
     const saved = localStorage.getItem("context5WExpanded");
     return saved !== null ? JSON.parse(saved) : true;
@@ -70,6 +72,30 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
   const [selectedPrompts, setSelectedPrompts] = useState<{type: string, effectiveness?: string}[]>([]);
   const [behavior, setBehavior] = useState<string>("");
   const [behaviorOther, setBehaviorOther] = useState<string>("");
+
+  // Reset form to defaults when shouldResetForm changes
+  useEffect(() => {
+    if (shouldResetForm) {
+      setContext({
+        who: [],
+        what: "Independent Work",
+        when: getCurrentTimeBlock(),
+        where: "Classroom",
+        why: "Unclear",
+        notes: "",
+        prompts: [],
+        behavior: "",
+      });
+      setBehavior("");
+      setBehaviorOther("");
+      setWhatOther("");
+      setWhenOther("");
+      setWhereOther("");
+      setWhyOther("");
+      setPromptOther("");
+      setSelectedPrompts([]);
+    }
+  }, [shouldResetForm]);
 
   useEffect(() => {
     onContextChange(context);
@@ -383,50 +409,21 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
             )}
           </div>
 
-          {/* BEHAVIOR - Behavior Observed (Optional) */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">
-              Behavior — optional.
-            </Label>
-            <div className="grid md:grid-cols-2 gap-2">
-              <Select value={behavior} onValueChange={setBehavior}>
-                <SelectTrigger className="h-12 text-base">
-                  <SelectValue placeholder="Select behavior (you can add this later)" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover z-50">
-                  <SelectItem value="Verbal Outburst">Verbal Outburst</SelectItem>
-                  <SelectItem value="Physical Aggression">Physical Aggression</SelectItem>
-                  <SelectItem value="Off-Task Behavior">Off-Task Behavior</SelectItem>
-                  <SelectItem value="Compliance">Compliance</SelectItem>
-                  <SelectItem value="Self-Injury">Self-Injury</SelectItem>
-                  <SelectItem value="Tantrum">Tantrum</SelectItem>
-                  <SelectItem value="Withdrawal">Withdrawal</SelectItem>
-                  <SelectItem value="Positive Participation">Positive Participation</SelectItem>
-                  <SelectItem value="Disruptive Behavior">Disruptive Behavior</SelectItem>
-                  <SelectItem value="Attention Seeking">Attention Seeking</SelectItem>
-                  <SelectItem value="Fidgeting">Fidgeting</SelectItem>
-                  <SelectItem value="Spitting">Spitting</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-              {behavior === "Other" && (
-                <Input
-                  placeholder="Specify behavior..."
-                  value={behaviorOther}
-                  onChange={(e) => setBehaviorOther(e.target.value)}
-                  className="h-12 text-base"
-                />
-              )}
-            </div>
-            {!behavior && (
-              <p className="text-xs text-muted-foreground">Use to tag ABC or episodes. You can add this later.</p>
-            )}
+          {/* BEHAVIOR - Behavior Observed (Optional) - Moved to top for better hierarchy */}
+          <div className="space-y-2 border-t pt-4">
+            <BehaviorSelector
+              value={behavior}
+              otherValue={behaviorOther}
+              onChange={setBehavior}
+              onOtherChange={setBehaviorOther}
+              disabled={false}
+            />
           </div>
 
-          {/* Notes */}
+          {/* Observer Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes" className="text-sm font-medium">
-              Contextual Notes
+              Observer Notes
             </Label>
             <Textarea
               id="notes"
@@ -435,6 +432,9 @@ export function ContextCapture({ onContextChange, recentStudents, isTimerRunning
               onChange={(e) => updateContext("notes", e.target.value)}
               className="min-h-[80px]"
             />
+            <p className="text-xs text-muted-foreground">
+              Notes will be searchable in reports
+            </p>
           </div>
         </CardContent>
       )}

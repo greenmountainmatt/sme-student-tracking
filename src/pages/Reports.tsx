@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, FileText, Download } from "lucide-react";
@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useObservations } from "@/hooks/useObservations";
 import { ReportWizard } from "@/components/reports/ReportWizard";
 import { ReportPreview } from "@/components/reports/ReportPreview";
+import { TimerStatusIndicator } from "@/components/observation/TimerStatusIndicator";
 import { calculateObservationStats } from "@/lib/calculateObservationStats";
 
 export type ReportType = 
@@ -14,7 +15,8 @@ export type ReportType =
   | "observer-summary"
   | "activity-analysis"
   | "location-analysis"
-  | "prompt-effectiveness";
+  | "prompt-effectiveness"
+  | "observer-notes";
 
 export interface ReportFilters {
   startDate?: string;
@@ -32,6 +34,32 @@ const Reports = () => {
   const [reportFilters, setReportFilters] = useState<ReportFilters>({});
   const [generatedReport, setGeneratedReport] = useState<any>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [activeTimer, setActiveTimer] = useState<{student: string; elapsedTime: number; isPaused: boolean} | null>(null);
+
+  // Check for active timer state
+  useEffect(() => {
+    const checkActiveTimer = () => {
+      const savedTimer = localStorage.getItem("activeSession_primary");
+      if (savedTimer) {
+        try {
+          const session = JSON.parse(savedTimer);
+          if (session.isRunning) {
+            setActiveTimer({
+              student: session.student,
+              elapsedTime: session.elapsedTime || 0,
+              isPaused: session.isPaused || false,
+            });
+          }
+        } catch (e) {
+          console.error("Failed to parse active timer:", e);
+        }
+      }
+    };
+    
+    checkActiveTimer();
+    const interval = setInterval(checkActiveTimer, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleGenerateReport = () => {
     // Generate report based on type and filters
@@ -213,6 +241,31 @@ const Reports = () => {
           filters,
         };
 
+      case "observer-notes":
+        const notesObservations = observations.filter(
+          (o) => o.context.notes && o.context.notes.trim()
+        );
+        return {
+          type: "Observer Notes Report",
+          title: "Observer Notes Collection",
+          statistics: {
+            ...stats,
+            totalObservations: notesObservations.length,
+          },
+          notesData: notesObservations.map((o) => ({
+            date: o.createdAt,
+            student: o.student,
+            observer: o.observer,
+            notes: o.context.notes,
+            status: o.status,
+            duration: o.duration,
+            activity: o.context.what,
+            location: o.context.where,
+          })),
+          observations: notesObservations,
+          filters,
+        };
+
       default:
         return { type: "Unknown", statistics: stats, observations, filters };
     }
@@ -261,6 +314,15 @@ const Reports = () => {
           </div>
         )}
       </div>
+
+      {/* Active Timer Status Indicator */}
+      {activeTimer && (
+        <TimerStatusIndicator
+          student={activeTimer.student}
+          elapsedTime={activeTimer.elapsedTime}
+          isPaused={activeTimer.isPaused}
+        />
+      )}
     </div>
   );
 };
