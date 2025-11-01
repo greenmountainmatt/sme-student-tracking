@@ -31,31 +31,69 @@ export function ObservationTimer({
   student,
   hasBehavior,
 }: ObservationTimerProps) {
+  type TimerPhase = "idle" | "running" | "paused" | "stopped";
+
   const [elapsedTime, setElapsedTime] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [timerPhase, setTimerPhase] = useState<TimerPhase>("idle");
+  const [lastRecordedDuration, setLastRecordedDuration] = useState<number | null>(null);
+  const intervalRef = useRef<number | null>(null);
+  const endingRef = useRef(false);
   const [wakeLock, setWakeLock] = useState<any>(null);
   const [episodes, setEpisodes] = useState<BehaviorEpisode[]>([]);
   const [episodeStatus, setEpisodeStatus] = useState<"on-task" | "off-task" | "transitioning" | null>(null);
   const [episodeStartTime, setEpisodeStartTime] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (isRunning && !isPaused) {
-      intervalRef.current = setInterval(() => {
+    console.debug(`[ObservationTimer] phase changed to ${timerPhase}`);
+
+    if (timerPhase === "running") {
+      if (intervalRef.current !== null) {
+        window.clearInterval(intervalRef.current);
+      }
+      intervalRef.current = window.setInterval(() => {
         setElapsedTime((prev) => prev + 1);
       }, 1000);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      console.debug("[ObservationTimer] interval started");
+    } else if (intervalRef.current !== null) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      console.debug(`[ObservationTimer] interval cleared (phase=${timerPhase})`);
     }
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      if (intervalRef.current !== null) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
-  }, [isRunning, isPaused]);
+  }, [timerPhase]);
+
+  useEffect(() => {
+    if (endingRef.current) {
+      if (!isRunning) {
+        console.debug("[ObservationTimer] external state confirmed stop");
+        endingRef.current = false;
+      } else {
+        return;
+      }
+    }
+
+    if (!isRunning) {
+      setTimerPhase((prev) => {
+        if (prev === "stopped" && lastRecordedDuration !== null) {
+          return "stopped";
+        }
+        return "idle";
+      });
+      return;
+    }
+
+    if (isPaused) {
+      setTimerPhase((prev) => (prev === "stopped" ? prev : "paused"));
+    } else {
+      setTimerPhase((prev) => (prev === "stopped" ? prev : "running"));
+    }
+  }, [isRunning, isPaused, lastRecordedDuration]);
 
   // Wake Lock functionality
   const requestWakeLock = async () => {
@@ -64,6 +102,7 @@ export function ObservationTimer({
         const lock = await (navigator as any).wakeLock.request('screen');
         setWakeLock(lock);
         toast.success("Screen wake lock activated");
+        console.debug("[ObservationTimer] wake lock requested");
       }
     } catch (err) {
       console.error('Wake lock error:', err);
@@ -76,6 +115,7 @@ export function ObservationTimer({
         await wakeLock.release();
         setWakeLock(null);
         toast.info("Screen wake lock released");
+        console.debug("[ObservationTimer] wake lock released");
       } catch (err) {
         console.error('Wake lock release error:', err);
       }
@@ -83,7 +123,7 @@ export function ObservationTimer({
   };
 
   useEffect(() => {
-    if (isRunning && !isPaused) {
+    if (timerPhase === "running") {
       requestWakeLock();
     } else {
       releaseWakeLock();
@@ -92,7 +132,7 @@ export function ObservationTimer({
     return () => {
       releaseWakeLock();
     };
-  }, [isRunning, isPaused]);
+  }, [timerPhase]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -101,6 +141,11 @@ export function ObservationTimer({
   };
 
   const handleStart = () => {
+    console.log("[ObservationTimer] Start pressed", {
+      observer,
+      student,
+      currentStatus,
+    });
     if (!observer) {
       toast.error("Please enter your name as observer");
       return;
@@ -114,7 +159,10 @@ export function ObservationTimer({
       toast.error("Please select a task status first");
       return;
     }
+    endingRef.current = false;
+    setLastRecordedDuration(null);
     setElapsedTime(0);
+    setTimerPhase("running");
     setEpisodes([]);
     setEpisodeStatus(null);
     onTimerStart();
@@ -122,11 +170,22 @@ export function ObservationTimer({
   };
 
   const handlePauseResume = () => {
+    const nextPhase = isPaused ? "running" : "paused";
+    console.log("[ObservationTimer] Pause/Resume pressed", {
+      currentPhase: timerPhase,
+      nextPhase,
+    });
+    setTimerPhase(nextPhase);
     onTimerPause();
     toast.info(isPaused ? "Timer resumed" : "Timer paused");
   };
 
   const handleEnd = () => {
+    console.log("[ObservationTimer] End pressed", {
+      elapsedTime,
+      currentPhase: timerPhase,
+      activeEpisodeStatus: episodeStatus,
+    });
     if (elapsedTime === 0) {
       toast.error("Cannot end timer with zero duration");
       return;
@@ -135,6 +194,15 @@ export function ObservationTimer({
       toast.error("Please end the current episode first");
       return;
     }
+    endingRef.current = true;
+    setTimerPhase("stopped");
+    setLastRecordedDuration(elapsedTime);
+    if (intervalRef.current !== null) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      console.debug("[ObservationTimer] interval cleared from End handler");
+    }
+    releaseWakeLock();
     // Validate and finalize episodes before saving
     // 1) Drop invalid episodes (non-positive duration)
     let finalizedEpisodes: BehaviorEpisode[] = episodes.filter((ep) => ep.duration > 0);
@@ -183,12 +251,17 @@ export function ObservationTimer({
 
     // 5) Save
     onTimerEnd(elapsedTime, finalizedEpisodes);
-    setElapsedTime(0);
+    setEpisodeStatus(null);
+    setEpisodeStartTime(null);
     setEpisodes([]);
     toast.success("Observation saved");
   };
 
   const startEpisode = (status: "on-task" | "off-task" | "transitioning") => {
+    console.log("[ObservationTimer] Quick episode start pressed", {
+      status,
+      timerPhase,
+    });
     if (status === currentStatus) {
       toast.error(`Already recording ${status} behavior`);
       return;
@@ -199,6 +272,10 @@ export function ObservationTimer({
   };
 
   const endEpisode = (duration: number, status: "on-task" | "off-task" | "transitioning") => {
+    console.log("[ObservationTimer] Episode completed", {
+      status,
+      duration,
+    });
     const newEpisode: BehaviorEpisode = {
       id: `${Date.now()}-${Math.random()}`,
       status,
@@ -213,10 +290,18 @@ export function ObservationTimer({
   };
 
   const cancelEpisode = () => {
+    console.log("[ObservationTimer] Episode cancelled", {
+      activeStatus: episodeStatus,
+    });
     setEpisodeStatus(null);
     setEpisodeStartTime(null);
     toast.info("Episode cancelled");
   };
+
+  const displayedTime = timerPhase === "stopped" && lastRecordedDuration !== null ? lastRecordedDuration : elapsedTime;
+
+  const showPausedLabel = timerPhase === "paused";
+  const showCompletedLabel = timerPhase === "stopped" && lastRecordedDuration !== null;
 
   return (
     <Card className="border-2 overflow-hidden">
@@ -232,10 +317,13 @@ export function ObservationTimer({
         </div>
         <div className="flex flex-col items-center justify-center py-6">
           <div className="text-6xl md:text-7xl font-extrabold text-primary-foreground tabular-nums">
-            {formatTime(elapsedTime)}
+            {formatTime(displayedTime)}
           </div>
-          {isPaused && (
+          {showPausedLabel && (
             <div className="text-sm text-white/90 font-medium mt-2">PAUSED</div>
+          )}
+          {showCompletedLabel && (
+            <div className="text-sm text-white font-semibold mt-2 tracking-wide">COMPLETED</div>
           )}
         </div>
       </div>
@@ -333,9 +421,9 @@ export function ObservationTimer({
           {!isRunning ? (
             <>
               <Button
-                variant="success"
+                variant="default"
                 size="xl"
-                className="w-full elev-drop-2 active:translate-y-[2px]"
+                className="w-full h-16 text-lg font-semibold uppercase tracking-wide elev-drop-2 active:translate-y-[2px]"
                 onClick={handleStart}
                 disabled={!observer || !student}
               >
@@ -353,7 +441,7 @@ export function ObservationTimer({
               <Button
                 variant={isPaused ? "success" : "warning"}
                 size="xl"
-                className="h-16 rounded-md font-semibold active:translate-y-[2px] elev-drop-2"
+                className="h-16 rounded-md font-semibold tracking-wide active:translate-y-[2px] elev-drop-2"
                 onClick={handlePauseResume}
               >
                 {isPaused ? (
@@ -368,7 +456,12 @@ export function ObservationTimer({
                   </>
                 )}
               </Button>
-              <Button variant="destructive" size="xl" className="h-16 rounded-md font-semibold active:translate-y-[2px] elev-drop-2" onClick={handleEnd}>
+              <Button
+                variant="destructive"
+                size="xl"
+                className="h-16 rounded-md font-semibold tracking-wide active:translate-y-[2px] elev-drop-2"
+                onClick={handleEnd}
+              >
                 <Square className="mr-2" />
                 END
               </Button>
