@@ -9,6 +9,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // Primary button: solid fill, bottom border for depth, hard-edged drop
+        default: "bg-primary text-primary-foreground border border-[hsl(var(--primary-700))] shadow-none hover:bg-[hsl(var(--primary-650))] active:translate-y-[2px] elev-drop-2 active:elev-inset-1 disabled:bg-[hsl(var(--primary-200))] disabled:text-[hsl(var(--foreground))]/40 disabled:border-[hsl(var(--surface-100))]",
+        destructive: "bg-destructive text-destructive-foreground border border-[hsl(var(--destructive-600))] hover:bg-[hsl(var(--destructive-600))] shadow-none active:translate-y-[2px] elev-drop-2 active:elev-inset-1 disabled:bg-[hsl(var(--surface-100))] disabled:text-[hsl(var(--surface-700))] disabled:border-[hsl(var(--surface-600))] disabled:opacity-70",
+        outline: "bg-background text-foreground border border-[hsl(var(--surface-700))] elev-drop-1 hover:border-[hsl(var(--surface-800))] active:translate-y-[2px] active:elev-inset-1",
+        secondary: "bg-secondary text-secondary-foreground border border-[hsl(var(--surface-700))] elev-drop-1 hover:border-[hsl(var(--surface-800))] active:translate-y-[2px] active:elev-inset-1",
+        ghost: "bg-background text-foreground border border-[hsl(var(--surface-700))] elev-drop-1 hover:border-[hsl(var(--surface-800))] active:translate-y-[2px] active:elev-inset-1",
+        link: "text-primary underline-offset-4 hover:underline shadow-none border-0",
+        success: "bg-success text-success-foreground border border-[hsl(var(--success-600))] hover:bg-[hsl(var(--success-600))] elev-drop-2 active:translate-y-[2px] active:elev-inset-1 disabled:bg-[hsl(var(--surface-100))] disabled:text-[hsl(var(--surface-700))] disabled:border-[hsl(var(--surface-600))] disabled:opacity-70",
+        warning: "bg-warning text-warning-foreground border border-[hsl(var(--warning-600))] hover:bg-[hsl(var(--warning-600))] elev-drop-2 active:translate-y-[2px] active:elev-inset-1 disabled:bg-[hsl(var(--surface-100))] disabled:text-[hsl(var(--surface-700))] disabled:border-[hsl(var(--surface-600))] disabled:opacity-70",
+        "status-active": "bg-status-active text-white border-2 border-transparent elev-drop-1 data-[active=true]:outline data-[active=true]:outline-2 data-[active=true]:outline-[hsl(var(--status-active))]",
+        "status-inactive": "bg-status-inactive text-white border-2 border-transparent elev-drop-1 data-[active=true]:outline data-[active=true]:outline-2 data-[active=true]:outline-[hsl(var(--status-inactive))]",
+        "status-transition": "bg-status-transition text-warning-foreground border-2 border-transparent elev-drop-1 data-[active=true]:outline data-[active=true]:outline-2 data-[active=true]:outline-[hsl(var(--status-transition))]",
         // Primary: filled with consistent border; color-only state changes
         default: "bg-[hsl(var(--button-primary-fill-default))] hover:bg-[hsl(var(--button-primary-fill-hover))] active:bg-[hsl(var(--button-primary-fill-active))] text-primary-foreground border border-[hsl(var(--button-primary-border))] shadow-none disabled:bg-[hsl(var(--button-primary-fill-disabled))] disabled:text-[hsl(var(--foreground))]/40",
         destructive: "bg-destructive text-destructive-foreground border border-destructive shadow-none",
