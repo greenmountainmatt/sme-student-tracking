@@ -331,12 +331,12 @@ export function ObservationTimer({
   const showCompletedLabel = timerPhase === "stopped" && lastRecordedDuration !== null;
 
   return (
-    <Card className="border-2 overflow-hidden">
-      <div className="p-6 bg-primary text-primary-foreground border-b-2 border-[hsl(var(--primary-700))] elev-drop-2">
-        <div className="flex items-center justify-between text-primary-foreground">
-          <CardTitle className="text-center flex-1 text-2xl md:text-3xl">Observation Timer</CardTitle>
+    <Card className="border">
+      <div className="p-4 bg-[hsl(var(--surface-100))] text-foreground border-b">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-bold">Observation Timer</CardTitle>
           {wakeLock && (
-            <div className="flex items-center gap-1 text-xs text-white/90">
+            <div className="flex items-center gap-1 text-xs">
               <Zap className="h-3 w-3" />
               Wake Lock Active
             </div>
@@ -352,9 +352,12 @@ export function ObservationTimer({
           {showCompletedLabel && (
             <div className="text-sm text-white font-semibold mt-2 tracking-wide">COMPLETED</div>
           )}
+        <div className="flex items-center justify-between mt-2">
+          <div className="text-3xl font-extrabold tabular-nums">{formatTime(elapsedTime)}</div>
+          {isPaused && <div className="text-xs font-medium">PAUSED</div>}
         </div>
       </div>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4">
         {/* Episode Timer */}
         {isRunning && episodeStatus && (
           <EpisodeTimer
@@ -372,7 +375,7 @@ export function ObservationTimer({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 border-success text-success hover:bg-success/10"
+                className="flex-1 border-success text-success hover:bg-success/10 min-h-[44px]"
                 onClick={() => startEpisode("on-task")}
               >
                 Quick On Task
@@ -382,7 +385,7 @@ export function ObservationTimer({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 border-destructive text-destructive hover:bg-destructive/10"
+                className="flex-1 border-destructive text-destructive hover:bg-destructive/10 min-h-[44px]"
                 onClick={() => startEpisode("off-task")}
               >
                 Quick Off Task
@@ -392,7 +395,7 @@ export function ObservationTimer({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 border-warning text-warning hover:bg-warning/10"
+                className="flex-1 border-warning text-warning hover:bg-warning/10 min-h-[44px]"
                 onClick={() => startEpisode("transitioning")}
               >
                 Quick Transition
@@ -413,28 +416,31 @@ export function ObservationTimer({
           <div className="grid grid-cols-3 gap-2">
             <Button
               variant="status-active"
-              size="lg"
+              size="default"
               onClick={() => onStatusChange("on-task")}
               data-active={currentStatus === "on-task"}
               disabled={isRunning || !observer}
+              className="min-h-[48px]"
             >
               On Task
             </Button>
             <Button
               variant="status-inactive"
-              size="lg"
+              size="default"
               onClick={() => onStatusChange("off-task")}
               data-active={currentStatus === "off-task"}
               disabled={isRunning || !observer}
+              className="min-h-[48px]"
             >
               Off Task
             </Button>
             <Button
               variant="status-transition"
-              size="lg"
+              size="default"
               onClick={() => onStatusChange("transitioning")}
               data-active={currentStatus === "transitioning"}
               disabled={isRunning || !observer}
+              className="min-h-[48px]"
             >
               Transitioning
             </Button>
@@ -444,13 +450,16 @@ export function ObservationTimer({
         {/* Timer Display moved to hero header above */}
 
         {/* Timer Controls */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           {!isRunning ? (
             <>
               <Button
                 variant="default"
                 size="xl"
                 className="w-full h-16 text-lg font-semibold uppercase tracking-wide elev-drop-2 active:translate-y-[2px]"
+                variant="success"
+                size="lg"
+                className="w-full min-h-[48px] text-base font-semibold"
                 onClick={handleStart}
                 disabled={!observer || !student}
               >
@@ -464,11 +473,13 @@ export function ObservationTimer({
               )}
             </>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 variant={isPaused ? "success" : "warning"}
                 size="xl"
                 className="h-16 rounded-md font-semibold tracking-wide active:translate-y-[2px] elev-drop-2"
+                size="lg"
+                className="h-12 min-h-[48px] rounded-md font-semibold"
                 onClick={handlePauseResume}
               >
                 {isPaused ? (
@@ -489,6 +500,7 @@ export function ObservationTimer({
                 className="h-16 rounded-md font-semibold tracking-wide active:translate-y-[2px] elev-drop-2"
                 onClick={handleEnd}
               >
+              <Button variant="destructive" size="lg" className="h-12 min-h-[48px] rounded-md font-semibold" onClick={handleEnd}>
                 <Square className="mr-2" />
                 END
               </Button>

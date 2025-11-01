@@ -23,6 +23,22 @@ const Index = () => {
   const [currentContext, setCurrentContext] = useState<any>(null);
   const [recentStudents, setRecentStudents] = useState<string[]>([]);
 
+  // Save active timer state to localStorage
+  useEffect(() => {
+    if (isTimerRunning) {
+      const timerState = {
+        isRunning: true,
+        isPaused: isTimerPaused,
+        student,
+        status: currentStatus,
+        observer,
+      };
+      localStorage.setItem("activeSession_primary", JSON.stringify(timerState));
+    } else {
+      localStorage.removeItem("activeSession_primary");
+    }
+  }, [isTimerRunning, isTimerPaused, student, currentStatus, observer]);
+
   // Load recent students from localStorage
   useEffect(() => {
     const savedRecent = localStorage.getItem("recentStudents");
@@ -31,7 +47,36 @@ const Index = () => {
     }
   }, []);
 
+  // Form reset handler - clears all fields at START of observation
+  const resetFormFields = () => {
+    setStudent("");
+    setCurrentContext({
+      who: [],
+      what: "Independent Work",
+      when: getCurrentTimeBlock(),
+      where: "Classroom",
+      why: "Unclear",
+      notes: "",
+      prompts: [],
+      behavior: "",
+    });
+  };
+
+  const getCurrentTimeBlock = () => {
+    const hour = new Date().getHours();
+    if (hour < 8.5) return "Warm-up";
+    if (hour < 10) return "Core Instruction";
+    if (hour < 11) return "Practice";
+    if (hour < 12) return "Centers";
+    if (hour < 13) return "Specials";
+    if (hour < 14) return "Core Instruction";
+    if (hour < 15) return "End of Day";
+    return "Transition";
+  };
+
   const handleTimerStart = () => {
+    // Clear all form fields at START
+    resetFormFields();
     setIsTimerRunning(true);
     setIsTimerPaused(false);
   };
@@ -75,11 +120,10 @@ const Index = () => {
     setRecentStudents(updatedRecent);
     localStorage.setItem("recentStudents", JSON.stringify(updatedRecent));
 
-    // Reset state
+    // Reset timer state only (form already cleared at start)
     setIsTimerRunning(false);
     setIsTimerPaused(false);
     setCurrentStatus(null);
-    setStudent("");
   };
 
   const formatDuration = (seconds: number) => {
@@ -102,15 +146,15 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-4 md:p-5">
+      <div className="max-w-5xl mx-auto space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <ClipboardList className="w-8 h-8 text-primary" />
+          <div className="flex items-center gap-2">
+            <ClipboardList className="w-6 h-6 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Behavioral Observation</h1>
-              <p className="text-sm text-muted-foreground">Real-time classroom data collection</p>
+              <h1 className="text-xl font-bold text-foreground">Behavioral Observation</h1>
+              <p className="text-xs text-muted-foreground">Real-time classroom data collection</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -140,12 +184,12 @@ const Index = () => {
 
         {/* Active Student Header */}
         {student && (
-          <Card className="bg-accent/20 border-accent">
-            <CardContent className="py-3">
+          <Card className="border-accent">
+            <CardContent className="py-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-sm text-muted-foreground">Observing:</span>
-                  <span className="ml-2 text-lg font-semibold">{student}</span>
+                  <span className="text-xs text-muted-foreground">Observing:</span>
+                  <span className="ml-2 text-sm font-semibold">{student}</span>
                 </div>
                 {currentStatus && getStatusBadge(currentStatus)}
               </div>
@@ -153,7 +197,7 @@ const Index = () => {
           </Card>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-2 gap-4">
           {/* Left Column */}
           <div className="space-y-6">
             <ObservationTimer
@@ -173,6 +217,7 @@ const Index = () => {
               onContextChange={setCurrentContext}
               recentStudents={recentStudents}
               isTimerRunning={isTimerRunning}
+              shouldResetForm={!isTimerRunning}
             />
           </div>
 

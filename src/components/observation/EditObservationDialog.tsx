@@ -18,7 +18,6 @@ import { Observation } from "@/hooks/useObservations";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface EditObservationDialogProps {
   open: boolean;

@@ -7,6 +7,7 @@ import { useObservations } from "@/hooks/useObservations";
 import { ObservationListItem } from "@/components/observation/ObservationListItem";
 import { EditObservationDialog } from "@/components/observation/EditObservationDialog";
 import { DeleteConfirmDialog } from "@/components/observation/DeleteConfirmDialog";
+import { TimerStatusIndicator } from "@/components/observation/TimerStatusIndicator";
 import { useState, useMemo, useEffect } from "react";
 import { Observation } from "@/hooks/useObservations";
 import { Badge } from "@/components/ui/badge";
@@ -26,10 +27,36 @@ const Observations = () => {
   });
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
+  const [activeTimer, setActiveTimer] = useState<{student: string; elapsedTime: number; isPaused: boolean} | null>(null);
 
   useEffect(() => {
     localStorage.setItem("observationsDateFilter", dateFilter);
   }, [dateFilter]);
+
+  // Check for active timer state
+  useEffect(() => {
+    const checkActiveTimer = () => {
+      const savedTimer = localStorage.getItem("activeSession_primary");
+      if (savedTimer) {
+        try {
+          const session = JSON.parse(savedTimer);
+          if (session.isRunning) {
+            setActiveTimer({
+              student: session.student,
+              elapsedTime: session.elapsedTime || 0,
+              isPaused: session.isPaused || false,
+            });
+          }
+        } catch (e) {
+          console.error("Failed to parse active timer:", e);
+        }
+      }
+    };
+    
+    checkActiveTimer();
+    const interval = setInterval(checkActiveTimer, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const filteredObservations = useMemo(() => {
     const now = new Date();
@@ -81,8 +108,8 @@ const Observations = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-4 md:p-5">
+      <div className="max-w-6xl mx-auto space-y-4">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -92,8 +119,8 @@ const Observations = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">All Observations</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl font-bold">All Observations</h1>
+            <p className="text-xs text-muted-foreground">
               Viewing {displayedObservations.length} of {filteredObservations.length} observations
             </p>
           </div>
@@ -111,42 +138,42 @@ const Observations = () => {
             <div className="flex flex-wrap gap-2">
               <Badge
                 variant={dateFilter === "today" ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2"
+                className="cursor-pointer px-3 py-1.5 min-h-[44px]"
                 onClick={() => setDateFilter("today")}
               >
                 Today
               </Badge>
               <Badge
                 variant={dateFilter === "yesterday" ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2"
+                className="cursor-pointer px-3 py-1.5 min-h-[44px]"
                 onClick={() => setDateFilter("yesterday")}
               >
                 Yesterday
               </Badge>
               <Badge
                 variant={dateFilter === "week" ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2"
+                className="cursor-pointer px-3 py-1.5 min-h-[44px]"
                 onClick={() => setDateFilter("week")}
               >
                 This Week
               </Badge>
               <Badge
                 variant={dateFilter === "month" ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2"
+                className="cursor-pointer px-3 py-1.5 min-h-[44px]"
                 onClick={() => setDateFilter("month")}
               >
                 This Month
               </Badge>
               <Badge
                 variant={dateFilter === "all" ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2"
+                className="cursor-pointer px-3 py-1.5 min-h-[44px]"
                 onClick={() => setDateFilter("all")}
               >
                 All Time
               </Badge>
               <Badge
                 variant={dateFilter === "custom" ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2"
+                className="cursor-pointer px-3 py-1.5 min-h-[44px]"
                 onClick={() => setDateFilter("custom")}
               >
                 Custom Range
@@ -190,15 +217,15 @@ const Observations = () => {
                 </CardDescription>
               </div>
               {totalPages > 1 && (
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-xs">
                   Page {currentPage} of {totalPages}
                 </div>
               )}
             </div>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[calc(100vh-420px)]">
-              <div className="space-y-2">
+            <ScrollArea className="h-[calc(100vh-360px)]">
+              <div className="divide-y">
                 {displayedObservations.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
                     No observations found for this filter. Start recording to see them here.
@@ -256,6 +283,15 @@ const Observations = () => {
         studentInitials={deletingObservation?.student || ""}
         timestamp={deletingObservation?.createdAt || new Date()}
       />
+
+      {/* Active Timer Status Indicator */}
+      {activeTimer && (
+        <TimerStatusIndicator
+          student={activeTimer.student}
+          elapsedTime={activeTimer.elapsedTime}
+          isPaused={activeTimer.isPaused}
+        />
+      )}
     </div>
   );
 };
