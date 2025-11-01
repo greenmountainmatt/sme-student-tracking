@@ -42,6 +42,10 @@ All colors MUST be HSL.
     --warning: 32 100% 50%; /* #ff8800 */
     --warning-foreground: 0 0% 10%;
 
+    --destructive-600: 0 100% 55%;
+    --success-600: 144 100% 35%;
+    --warning-600: 32 100% 45%;
+
     --border: 0 0% 88%; /* #e0e0e0 */
     --input: 0 0% 88%;
     --ring: 190 100% 50%;
@@ -109,6 +113,10 @@ All colors MUST be HSL.
 
     --warning: 32 100% 55%;
     --warning-foreground: 0 0% 10%;
+
+    --destructive-600: 0 100% 50%;
+    --success-600: 144 100% 34%;
+    --warning-600: 32 100% 50%;
 
     --border: 0 0% 22%;
     --input: 0 0% 22%;
