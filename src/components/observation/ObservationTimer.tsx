@@ -69,31 +69,58 @@ export function ObservationTimer({
   }, [timerPhase]);
 
   useEffect(() => {
+    console.debug("[ObservationTimer] useEffect triggered", {
+      isRunning,
+      isPaused,
+      timerPhase,
+      endingRef: endingRef.current,
+    });
+
+    // If we're in the process of ending, wait for parent state to confirm
     if (endingRef.current) {
       if (!isRunning) {
         console.debug("[ObservationTimer] external state confirmed stop");
         endingRef.current = false;
       } else {
+        console.debug("[ObservationTimer] waiting for parent to confirm stop");
         return;
       }
     }
 
+    // When timer is not running, transition to appropriate idle state
     if (!isRunning) {
       setTimerPhase((prev) => {
+        console.debug("[ObservationTimer] timer not running, current phase:", prev);
+        // If we just stopped and have a recorded duration, stay stopped
         if (prev === "stopped" && lastRecordedDuration !== null) {
+          console.debug("[ObservationTimer] keeping stopped state");
           return "stopped";
         }
+        // Otherwise go back to idle
+        console.debug("[ObservationTimer] transitioning to idle");
         return "idle";
       });
       return;
     }
 
-    if (isPaused) {
-      setTimerPhase((prev) => (prev === "stopped" ? prev : "paused"));
-    } else {
-      setTimerPhase((prev) => (prev === "stopped" ? prev : "running"));
-    }
-  }, [isRunning, isPaused, lastRecordedDuration]);
+    // Only update phase if we're not stopped (stopped is terminal until reset)
+    setTimerPhase((prev) => {
+      // CRITICAL: Never auto-restart from stopped state
+      if (prev === "stopped") {
+        console.debug("[ObservationTimer] blocking transition from stopped state");
+        return "stopped";
+      }
+      
+      // Normal running/paused transitions
+      if (isPaused) {
+        console.debug("[ObservationTimer] transitioning to paused");
+        return "paused";
+      } else {
+        console.debug("[ObservationTimer] transitioning to running");
+        return "running";
+      }
+    });
+  }, [isRunning, isPaused]);
 
   // Wake Lock functionality
   const requestWakeLock = async () => {
