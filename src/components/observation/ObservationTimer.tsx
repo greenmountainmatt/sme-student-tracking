@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Play, Pause, Square, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { EpisodeTimer } from "./EpisodeTimer";
@@ -29,7 +29,7 @@ export function ObservationTimer({
   isPaused,
   observer,
   student,
-  hasBehavior,
+  hasBehavior: _hasBehavior,
 }: ObservationTimerProps) {
   type TimerPhase = "idle" | "running" | "paused" | "stopped";
 
@@ -69,58 +69,39 @@ export function ObservationTimer({
   }, [timerPhase]);
 
   useEffect(() => {
-    console.debug("[ObservationTimer] useEffect triggered", {
+    console.debug("[ObservationTimer] sync effect", {
       isRunning,
       isPaused,
       timerPhase,
       endingRef: endingRef.current,
+      lastRecordedDuration,
     });
 
-    // If we're in the process of ending, wait for parent state to confirm
     if (endingRef.current) {
       if (!isRunning) {
         console.debug("[ObservationTimer] external state confirmed stop");
         endingRef.current = false;
       } else {
-        console.debug("[ObservationTimer] waiting for parent to confirm stop");
+        console.debug("[ObservationTimer] awaiting parent stop acknowledgement");
         return;
       }
     }
 
-    // When timer is not running, transition to appropriate idle state
     if (!isRunning) {
       setTimerPhase((prev) => {
-        console.debug("[ObservationTimer] timer not running, current phase:", prev);
-        // If we just stopped and have a recorded duration, stay stopped
-        if (prev === "stopped" && lastRecordedDuration !== null) {
-          console.debug("[ObservationTimer] keeping stopped state");
-          return "stopped";
+        if (prev === "running" || prev === "paused") {
+          return prev;
         }
-        // Otherwise go back to idle
-        console.debug("[ObservationTimer] transitioning to idle");
-        return "idle";
+
+        const nextPhase: TimerPhase = lastRecordedDuration !== null ? "stopped" : "idle";
+        return prev === nextPhase ? prev : nextPhase;
       });
       return;
     }
 
-    // Only update phase if we're not stopped (stopped is terminal until reset)
-    setTimerPhase((prev) => {
-      // CRITICAL: Never auto-restart from stopped state
-      if (prev === "stopped") {
-        console.debug("[ObservationTimer] blocking transition from stopped state");
-        return "stopped";
-      }
-      
-      // Normal running/paused transitions
-      if (isPaused) {
-        console.debug("[ObservationTimer] transitioning to paused");
-        return "paused";
-      } else {
-        console.debug("[ObservationTimer] transitioning to running");
-        return "running";
-      }
-    });
-  }, [isRunning, isPaused]);
+    const desiredPhase: TimerPhase = isPaused ? "paused" : "running";
+    setTimerPhase((prev) => (prev === desiredPhase ? prev : desiredPhase));
+  }, [isRunning, isPaused, lastRecordedDuration]);
 
   // Wake Lock functionality
   const requestWakeLock = async () => {
@@ -281,7 +262,6 @@ export function ObservationTimer({
     setEpisodeStatus(null);
     setEpisodeStartTime(null);
     setEpisodes([]);
-    toast.success("Observation saved");
   };
 
   const startEpisode = (status: "on-task" | "off-task" | "transitioning") => {
@@ -329,12 +309,13 @@ export function ObservationTimer({
 
   const showPausedLabel = timerPhase === "paused";
   const showCompletedLabel = timerPhase === "stopped" && lastRecordedDuration !== null;
+  const canStartTimer = useMemo(() => Boolean(observer.trim() && student.trim()), [observer, student]);
 
   return (
-    <Card className="border">
+    <Card className="border overflow-hidden">
       <div className="p-4 bg-[hsl(var(--surface-100))] text-foreground border-b">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-bold">Observation Timer</CardTitle>
+          <p className="text-base font-bold">Observation Timer</p>
           {wakeLock && (
             <div className="flex items-center gap-1 text-xs">
               <Zap className="h-3 w-3" />
@@ -342,23 +323,19 @@ export function ObservationTimer({
             </div>
           )}
         </div>
-        <div className="flex flex-col items-center justify-center py-6">
+        <div className="flex flex-col items-center justify-center py-6 gap-2">
           <div className="text-6xl md:text-7xl font-extrabold text-primary-foreground tabular-nums">
             {formatTime(displayedTime)}
           </div>
           {showPausedLabel && (
-            <div className="text-sm text-white/90 font-medium mt-2">PAUSED</div>
+            <div className="text-sm text-white/90 font-medium">PAUSED</div>
           )}
           {showCompletedLabel && (
-            <div className="text-sm text-white font-semibold mt-2 tracking-wide">COMPLETED</div>
+            <div className="text-sm text-white font-semibold tracking-wide">COMPLETED</div>
           )}
-        <div className="flex items-center justify-between mt-2">
-          <div className="text-3xl font-extrabold tabular-nums">{formatTime(elapsedTime)}</div>
-          {isPaused && <div className="text-xs font-medium">PAUSED</div>}
         </div>
       </div>
       <CardContent className="space-y-4">
-        {/* Episode Timer */}
         {isRunning && episodeStatus && (
           <EpisodeTimer
             status={episodeStatus}
@@ -368,7 +345,6 @@ export function ObservationTimer({
           />
         )}
 
-        {/* Quick Episode Buttons */}
         {isRunning && !isPaused && !episodeStatus && (
           <div className="flex gap-2">
             {currentStatus !== "on-task" && (
@@ -404,19 +380,17 @@ export function ObservationTimer({
           </div>
         )}
 
-        {/* Episodes Summary */}
         {episodes.length > 0 && (
           <div className="text-xs text-muted-foreground">
-            Episodes recorded: {episodes.length} ({episodes.filter(e => e.status === "on-task").length} on-task, {episodes.filter(e => e.status === "off-task").length} off-task, {episodes.filter(e => e.status === "transitioning").length} transitioning)
+            Episodes recorded: {episodes.length} ({episodes.filter((e) => e.status === "on-task").length} on-task, {episodes.filter((e) => e.status === "off-task").length} off-task, {episodes.filter((e) => e.status === "transitioning").length} transitioning)
           </div>
         )}
-        {/* Status Selection */}
+
         <div className="space-y-2">
           <label className="text-sm font-medium">Task Status</label>
           <div className="grid grid-cols-3 gap-2">
             <Button
               variant="status-active"
-              size="default"
               onClick={() => onStatusChange("on-task")}
               data-active={currentStatus === "on-task"}
               disabled={isRunning || !observer}
@@ -426,7 +400,6 @@ export function ObservationTimer({
             </Button>
             <Button
               variant="status-inactive"
-              size="default"
               onClick={() => onStatusChange("off-task")}
               data-active={currentStatus === "off-task"}
               disabled={isRunning || !observer}
@@ -436,7 +409,6 @@ export function ObservationTimer({
             </Button>
             <Button
               variant="status-transition"
-              size="default"
               onClick={() => onStatusChange("transitioning")}
               data-active={currentStatus === "transitioning"}
               disabled={isRunning || !observer}
@@ -447,26 +419,20 @@ export function ObservationTimer({
           </div>
         </div>
 
-        {/* Timer Display moved to hero header above */}
-
-        {/* Timer Controls */}
         <div className="space-y-2">
           {!isRunning ? (
             <>
               <Button
-                variant="default"
-                size="xl"
-                className="w-full h-16 text-lg font-semibold uppercase tracking-wide elev-drop-2 active:translate-y-[2px]"
                 variant="success"
                 size="lg"
                 className="w-full min-h-[48px] text-base font-semibold"
                 onClick={handleStart}
-                disabled={!observer || !student}
+                disabled={!canStartTimer}
               >
                 <Play className="mr-2" />
-                START Timer
+                Start Timer
               </Button>
-              {(!observer || !student) && (
+              {!canStartTimer && (
                 <p className="text-xs text-center text-muted-foreground">
                   Enter observer and student to begin
                 </p>
@@ -476,8 +442,6 @@ export function ObservationTimer({
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant={isPaused ? "success" : "warning"}
-                size="xl"
-                className="h-16 rounded-md font-semibold tracking-wide active:translate-y-[2px] elev-drop-2"
                 size="lg"
                 className="h-12 min-h-[48px] rounded-md font-semibold"
                 onClick={handlePauseResume}
@@ -485,24 +449,23 @@ export function ObservationTimer({
                 {isPaused ? (
                   <>
                     <Play className="mr-2" />
-                    RESUME
+                    Resume
                   </>
                 ) : (
                   <>
                     <Pause className="mr-2" />
-                    PAUSE
+                    Pause
                   </>
                 )}
               </Button>
               <Button
                 variant="destructive"
-                size="xl"
-                className="h-16 rounded-md font-semibold tracking-wide active:translate-y-[2px] elev-drop-2"
+                size="lg"
+                className="h-12 min-h-[48px] rounded-md font-semibold"
                 onClick={handleEnd}
               >
-              <Button variant="destructive" size="lg" className="h-12 min-h-[48px] rounded-md font-semibold" onClick={handleEnd}>
                 <Square className="mr-2" />
-                END
+                End
               </Button>
             </div>
           )}
