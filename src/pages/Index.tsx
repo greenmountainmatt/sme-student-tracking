@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ClipboardList, List, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useObservations } from "@/hooks/useObservations";
+import { toast } from "sonner";
 
 
 const Index = () => {
@@ -20,7 +21,30 @@ const Index = () => {
   const [currentStatus, setCurrentStatus] = useState<"on-task" | "off-task" | "transitioning" | null>(null);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isTimerPaused, setIsTimerPaused] = useState(false);
-  const [currentContext, setCurrentContext] = useState<any>(null);
+  function getCurrentTimeBlock() {
+    const hour = new Date().getHours();
+    if (hour < 8.5) return "Warm-up";
+    if (hour < 10) return "Core Instruction";
+    if (hour < 11) return "Practice";
+    if (hour < 12) return "Centers";
+    if (hour < 13) return "Specials";
+    if (hour < 14) return "Core Instruction";
+    if (hour < 15) return "End of Day";
+    return "Transition";
+  }
+
+  const createDefaultContext = () => ({
+    who: [],
+    what: "Independent Work",
+    when: getCurrentTimeBlock(),
+    where: "Classroom",
+    why: "Unclear",
+    notes: "",
+    prompts: [],
+    behavior: "",
+  });
+
+  const [currentContext, setCurrentContext] = useState(createDefaultContext);
   const [recentStudents, setRecentStudents] = useState<string[]>([]);
 
   // Save active timer state to localStorage
@@ -47,36 +71,13 @@ const Index = () => {
     }
   }, []);
 
-  // Form reset handler - clears all fields at START of observation
-  const resetFormFields = () => {
-    setStudent("");
-    setCurrentContext({
-      who: [],
-      what: "Independent Work",
-      when: getCurrentTimeBlock(),
-      where: "Classroom",
-      why: "Unclear",
-      notes: "",
-      prompts: [],
-      behavior: "",
-    });
-  };
-
-  const getCurrentTimeBlock = () => {
-    const hour = new Date().getHours();
-    if (hour < 8.5) return "Warm-up";
-    if (hour < 10) return "Core Instruction";
-    if (hour < 11) return "Practice";
-    if (hour < 12) return "Centers";
-    if (hour < 13) return "Specials";
-    if (hour < 14) return "Core Instruction";
-    if (hour < 15) return "End of Day";
-    return "Transition";
+  // Reset observation context at START of observation
+  const resetObservationContext = () => {
+    setCurrentContext(createDefaultContext());
   };
 
   const handleTimerStart = () => {
-    // Clear all form fields at START
-    resetFormFields();
+    resetObservationContext();
     setIsTimerRunning(true);
     setIsTimerPaused(false);
   };
@@ -86,36 +87,49 @@ const Index = () => {
   };
 
   const handleTimerEnd = (duration: number, episodes: any[]) => {
-    if (!student || !currentStatus || !observer) return;
-    const resolvedBehavior = currentContext?.behavior?.trim?.() || "";
+    const trimmedStudent = student.trim();
+    if (!trimmedStudent || !currentStatus || !observer.trim()) {
+      toast.error("Missing observer, student, or status. Observation not saved.");
+      return;
+    }
+
+    const contextSnapshot = currentContext ?? createDefaultContext();
+    const resolvedBehavior = contextSnapshot.behavior?.trim?.() || "";
 
     const newObservation = {
       id: Date.now().toString(),
       createdAt: new Date(),
-      observer,
-      student,
+      observer: observer.trim(),
+      student: trimmedStudent,
       behavior: resolvedBehavior || "Unspecified",
       status: currentStatus,
       duration,
       episodes,
       context: {
-        who: currentContext.who || [],
-        what: currentContext.what,
-        when: currentContext.when,
-        where: currentContext.where,
-        why: currentContext.why,
-        notes: currentContext.notes || "",
-        prompts: currentContext.prompts || [],
+        who: contextSnapshot.who || [],
+        what: contextSnapshot.what,
+        when: contextSnapshot.when,
+        where: contextSnapshot.where,
+        why: contextSnapshot.why,
+        notes: contextSnapshot.notes || "",
+        prompts: contextSnapshot.prompts || [],
         behavior: resolvedBehavior || "Unspecified",
       },
     };
 
-    addObservation(newObservation);
+    try {
+      addObservation(newObservation);
+      toast.success("Observation saved");
+    } catch (error) {
+      console.error("Failed to persist observation", error);
+      toast.error("Failed to save observation. Please try again.");
+      return;
+    }
 
     // Update recent students
     const updatedRecent = [
-      student,
-      ...recentStudents.filter((s) => s !== student),
+      trimmedStudent,
+      ...recentStudents.filter((s) => s !== trimmedStudent),
     ].slice(0, 5);
     setRecentStudents(updatedRecent);
     localStorage.setItem("recentStudents", JSON.stringify(updatedRecent));
@@ -124,6 +138,7 @@ const Index = () => {
     setIsTimerRunning(false);
     setIsTimerPaused(false);
     setCurrentStatus(null);
+    resetObservationContext();
   };
 
   const formatDuration = (seconds: number) => {
