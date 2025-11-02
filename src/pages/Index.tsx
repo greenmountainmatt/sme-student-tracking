@@ -75,10 +75,10 @@ const Index = () => {
   };
 
   const handleTimerStart = () => {
-    // Clear all form fields at START
-    resetFormFields();
     setIsTimerRunning(true);
     setIsTimerPaused(false);
+    // Form will be cleared by timer component after validation
+    resetFormFields();
   };
 
   const handleTimerPause = () => {

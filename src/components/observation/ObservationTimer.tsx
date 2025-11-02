@@ -173,6 +173,8 @@ export function ObservationTimer({
       student,
       currentStatus,
     });
+    
+    // Validate BEFORE calling onTimerStart (which triggers form clear)
     if (!observer) {
       toast.error("Please enter your name as observer");
       return;
@@ -181,17 +183,21 @@ export function ObservationTimer({
       toast.error("Please enter student initials");
       return;
     }
-    // Behavior is optional; proceed even if not set
     if (!currentStatus) {
       toast.error("Please select a task status first");
       return;
     }
+    
+    // Reset internal state
     endingRef.current = false;
     setLastRecordedDuration(null);
     setElapsedTime(0);
     setTimerPhase("running");
     setEpisodes([]);
     setEpisodeStatus(null);
+    setEpisodeStartTime(null);
+    
+    // NOW call parent to start timer (which triggers form clear)
     onTimerStart();
     toast.success("Timer started");
   };
@@ -352,9 +358,6 @@ export function ObservationTimer({
           {showCompletedLabel && (
             <div className="text-sm text-white font-semibold mt-2 tracking-wide">COMPLETED</div>
           )}
-        <div className="flex items-center justify-between mt-2">
-          <div className="text-3xl font-extrabold tabular-nums">{formatTime(elapsedTime)}</div>
-          {isPaused && <div className="text-xs font-medium">PAUSED</div>}
         </div>
       </div>
       <CardContent className="space-y-4">
@@ -454,9 +457,6 @@ export function ObservationTimer({
           {!isRunning ? (
             <>
               <Button
-                variant="default"
-                size="xl"
-                className="w-full h-16 text-lg font-semibold uppercase tracking-wide elev-drop-2 active:translate-y-[2px]"
                 variant="success"
                 size="lg"
                 className="w-full min-h-[48px] text-base font-semibold"
@@ -476,8 +476,6 @@ export function ObservationTimer({
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant={isPaused ? "success" : "warning"}
-                size="xl"
-                className="h-16 rounded-md font-semibold tracking-wide active:translate-y-[2px] elev-drop-2"
                 size="lg"
                 className="h-12 min-h-[48px] rounded-md font-semibold"
                 onClick={handlePauseResume}
@@ -496,11 +494,10 @@ export function ObservationTimer({
               </Button>
               <Button
                 variant="destructive"
-                size="xl"
-                className="h-16 rounded-md font-semibold tracking-wide active:translate-y-[2px] elev-drop-2"
+                size="lg"
+                className="h-12 min-h-[48px] rounded-md font-semibold"
                 onClick={handleEnd}
               >
-              <Button variant="destructive" size="lg" className="h-12 min-h-[48px] rounded-md font-semibold" onClick={handleEnd}>
                 <Square className="mr-2" />
                 END
               </Button>
