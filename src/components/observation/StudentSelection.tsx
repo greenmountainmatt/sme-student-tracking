@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,27 @@ export function StudentSelection({
   recentStudents,
   isTimerRunning,
 }: StudentSelectionProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const renderCountRef = useRef(0);
+
+  renderCountRef.current += 1;
+
+  console.log("=== INPUT COMPLETE DEBUG ===");
+  console.log("Input value:", currentStudent);
+  console.log("Input props:", {
+    disabled: isTimerRunning,
+    readOnly: false,
+    onChange: typeof onStudentChange === "function" ? "function" : typeof onStudentChange,
+    onInput: undefined,
+  });
+  console.log("Event handler exists:", typeof onStudentChange === "function");
+  console.log("Input ref current:", inputRef.current);
+  console.log("Form state:", {
+    isTimerRunning,
+    recentStudentsCount: recentStudents.length,
+    renderCount: renderCountRef.current,
+  });
+
   return (
     <Card className="border-2 border-primary/20 bg-accent/10">
       <CardContent className="pt-6 space-y-3">
@@ -48,6 +70,7 @@ export function StudentSelection({
           onChange={(e) => onStudentChange(e.target.value)}
           disabled={isTimerRunning}
           className="text-sm h-12"
+          ref={inputRef}
         />
       </CardContent>
     </Card>
