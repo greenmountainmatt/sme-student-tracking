@@ -80,6 +80,8 @@ const Index = () => {
     resetObservationContext();
     setIsTimerRunning(true);
     setIsTimerPaused(false);
+    // Form will be cleared by timer component after validation
+    resetFormFields();
   };
 
   const handleTimerPause = () => {

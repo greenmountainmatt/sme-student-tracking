@@ -96,6 +96,12 @@ export function ObservationTimer({
         const nextPhase: TimerPhase = lastRecordedDuration !== null ? "stopped" : "idle";
         return prev === nextPhase ? prev : nextPhase;
       });
+    // When timer is not running, reset to idle state
+    if (!isRunning) {
+      console.debug("[ObservationTimer] timer not running, resetting to idle");
+      setTimerPhase("idle");
+      setLastRecordedDuration(null);
+      setElapsedTime(0);
       return;
     }
 
@@ -154,6 +160,8 @@ export function ObservationTimer({
       student,
       currentStatus,
     });
+    
+    // Validate BEFORE calling onTimerStart (which triggers form clear)
     if (!observer) {
       toast.error("Please enter your name as observer");
       return;
@@ -162,17 +170,21 @@ export function ObservationTimer({
       toast.error("Please enter student initials");
       return;
     }
-    // Behavior is optional; proceed even if not set
     if (!currentStatus) {
       toast.error("Please select a task status first");
       return;
     }
+    
+    // Reset internal state
     endingRef.current = false;
     setLastRecordedDuration(null);
     setElapsedTime(0);
     setTimerPhase("running");
     setEpisodes([]);
     setEpisodeStatus(null);
+    setEpisodeStartTime(null);
+    
+    // NOW call parent to start timer (which triggers form clear)
     onTimerStart();
     toast.success("Timer started");
   };
@@ -257,11 +269,14 @@ export function ObservationTimer({
     // 4) Sort episodes by start time for consistency
     finalizedEpisodes.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
 
-    // 5) Save
+    // 5) Save and reset timer state
     onTimerEnd(elapsedTime, finalizedEpisodes);
     setEpisodeStatus(null);
     setEpisodeStartTime(null);
     setEpisodes([]);
+    setElapsedTime(0);
+    setLastRecordedDuration(null);
+    toast.success("Observation saved");
   };
 
   const startEpisode = (status: "on-task" | "off-task" | "transitioning") => {
@@ -325,6 +340,8 @@ export function ObservationTimer({
         </div>
         <div className="flex flex-col items-center justify-center py-6 gap-2">
           <div className="text-6xl md:text-7xl font-extrabold text-primary-foreground tabular-nums">
+        <div className="flex flex-col items-center justify-center py-6">
+          <div className="text-6xl md:text-7xl font-extrabold text-foreground tabular-nums">
             {formatTime(displayedTime)}
           </div>
           {showPausedLabel && (
