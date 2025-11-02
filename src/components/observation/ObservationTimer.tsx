@@ -87,19 +87,12 @@ export function ObservationTimer({
       }
     }
 
-    // When timer is not running, transition to appropriate idle state
+    // When timer is not running, reset to idle state
     if (!isRunning) {
-      setTimerPhase((prev) => {
-        console.debug("[ObservationTimer] timer not running, current phase:", prev);
-        // If we just stopped and have a recorded duration, stay stopped
-        if (prev === "stopped" && lastRecordedDuration !== null) {
-          console.debug("[ObservationTimer] keeping stopped state");
-          return "stopped";
-        }
-        // Otherwise go back to idle
-        console.debug("[ObservationTimer] transitioning to idle");
-        return "idle";
-      });
+      console.debug("[ObservationTimer] timer not running, resetting to idle");
+      setTimerPhase("idle");
+      setLastRecordedDuration(null);
+      setElapsedTime(0);
       return;
     }
 
@@ -282,11 +275,13 @@ export function ObservationTimer({
     // 4) Sort episodes by start time for consistency
     finalizedEpisodes.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
 
-    // 5) Save
+    // 5) Save and reset timer state
     onTimerEnd(elapsedTime, finalizedEpisodes);
     setEpisodeStatus(null);
     setEpisodeStartTime(null);
     setEpisodes([]);
+    setElapsedTime(0);
+    setLastRecordedDuration(null);
     toast.success("Observation saved");
   };
 
@@ -349,7 +344,7 @@ export function ObservationTimer({
           )}
         </div>
         <div className="flex flex-col items-center justify-center py-6">
-          <div className="text-6xl md:text-7xl font-extrabold text-primary-foreground tabular-nums">
+          <div className="text-6xl md:text-7xl font-extrabold text-foreground tabular-nums">
             {formatTime(displayedTime)}
           </div>
           {showPausedLabel && (
