@@ -42,6 +42,31 @@ export function ObservationTimer({
   const [episodes, setEpisodes] = useState<BehaviorEpisode[]>([]);
   const [episodeStatus, setEpisodeStatus] = useState<"on-task" | "off-task" | "transitioning" | null>(null);
   const [episodeStartTime, setEpisodeStartTime] = useState<Date | null>(null);
+  const renderCountRef = useRef(0);
+  const canStartTimer = useMemo(() => Boolean(observer.trim() && student.trim()), [observer, student]);
+  const currentTime = timerPhase === "stopped" && lastRecordedDuration !== null ? lastRecordedDuration : elapsedTime;
+
+  renderCountRef.current += 1;
+  const renderCount = renderCountRef.current;
+
+  const timerDebugState = useMemo(
+    () => ({
+      elapsedTime,
+      timerPhase,
+      lastRecordedDuration,
+      episodes: episodes.map((episode) => ({
+        id: episode.id,
+        status: episode.status,
+        duration: episode.duration,
+        startTime: episode.startTime?.toISOString?.() ?? null,
+        endTime: episode.endTime?.toISOString?.() ?? null,
+      })),
+      episodeStatus,
+      episodeStartTime: episodeStartTime?.toISOString?.() ?? null,
+      wakeLockActive: Boolean(wakeLock),
+    }),
+    [elapsedTime, timerPhase, lastRecordedDuration, episodes, episodeStatus, episodeStartTime, wakeLock]
+  );
 
   useEffect(() => {
     console.debug(`[ObservationTimer] phase changed to ${timerPhase}`);
@@ -75,6 +100,7 @@ export function ObservationTimer({
       timerPhase,
       endingRef: endingRef.current,
       lastRecordedDuration,
+      elapsedTime,
     });
 
     if (endingRef.current) {
@@ -88,26 +114,29 @@ export function ObservationTimer({
     }
 
     if (!isRunning) {
-      setTimerPhase((prev) => {
-        if (prev === "running" || prev === "paused") {
-          return prev;
-        }
+      const nextPhase: TimerPhase = lastRecordedDuration !== null ? "stopped" : "idle";
+      if (timerPhase !== nextPhase) {
+        setTimerPhase(nextPhase);
+      }
 
-        const nextPhase: TimerPhase = lastRecordedDuration !== null ? "stopped" : "idle";
-        return prev === nextPhase ? prev : nextPhase;
-      });
-    // When timer is not running, reset to idle state
-    if (!isRunning) {
-      console.debug("[ObservationTimer] timer not running, resetting to idle");
-      setTimerPhase("idle");
-      setLastRecordedDuration(null);
-      setElapsedTime(0);
+      if (nextPhase === "idle") {
+        if (lastRecordedDuration !== null) {
+          console.debug("[ObservationTimer] clearing last recorded duration for idle reset");
+          setLastRecordedDuration(null);
+        }
+        if (elapsedTime !== 0) {
+          setElapsedTime(0);
+        }
+      }
+
       return;
     }
 
     const desiredPhase: TimerPhase = isPaused ? "paused" : "running";
-    setTimerPhase((prev) => (prev === desiredPhase ? prev : desiredPhase));
-  }, [isRunning, isPaused, lastRecordedDuration]);
+    if (timerPhase !== desiredPhase) {
+      setTimerPhase(desiredPhase);
+    }
+  }, [isRunning, isPaused, timerPhase, lastRecordedDuration, elapsedTime]);
 
   // Wake Lock functionality
   const requestWakeLock = async () => {
@@ -320,11 +349,23 @@ export function ObservationTimer({
     toast.info("Episode cancelled");
   };
 
-  const displayedTime = timerPhase === "stopped" && lastRecordedDuration !== null ? lastRecordedDuration : elapsedTime;
+  const startDisabled = !canStartTimer;
+
+  console.log("=== TIMER COMPLETE DEBUG ===");
+  console.log("Timer state object:", JSON.stringify(timerDebugState, null, 2));
+  console.log("Is running:", isRunning);
+  console.log("Current time value:", currentTime);
+  console.log("Timer status/phase:", timerPhase);
+  console.log("Start button props:", {
+    disabled: startDisabled,
+    onClick: handleStart,
+  });
+  console.log("Component render count:", renderCount);
+
+  const displayedTime = currentTime;
 
   const showPausedLabel = timerPhase === "paused";
   const showCompletedLabel = timerPhase === "stopped" && lastRecordedDuration !== null;
-  const canStartTimer = useMemo(() => Boolean(observer.trim() && student.trim()), [observer, student]);
 
   return (
     <Card className="border overflow-hidden">
@@ -339,8 +380,6 @@ export function ObservationTimer({
           )}
         </div>
         <div className="flex flex-col items-center justify-center py-6 gap-2">
-          <div className="text-6xl md:text-7xl font-extrabold text-primary-foreground tabular-nums">
-        <div className="flex flex-col items-center justify-center py-6">
           <div className="text-6xl md:text-7xl font-extrabold text-foreground tabular-nums">
             {formatTime(displayedTime)}
           </div>

@@ -80,8 +80,6 @@ const Index = () => {
     resetObservationContext();
     setIsTimerRunning(true);
     setIsTimerPaused(false);
-    // Form will be cleared by timer component after validation
-    resetFormFields();
   };
 
   const handleTimerPause = () => {
@@ -90,8 +88,28 @@ const Index = () => {
 
   const handleTimerEnd = (duration: number, episodes: any[]) => {
     const trimmedStudent = student.trim();
-    if (!trimmedStudent || !currentStatus || !observer.trim()) {
-      toast.error("Missing observer, student, or status. Observation not saved.");
+    const trimmedObserver = observer.trim();
+
+    console.log("=== SAVE COMPLETE DEBUG ===");
+    console.log("Save button clicked");
+    const formDataSnapshot = {
+      observer: trimmedObserver,
+      student: trimmedStudent,
+      status: currentStatus,
+      duration,
+      episodes,
+      context: currentContext,
+    };
+    console.log("Complete form data:", JSON.stringify(formDataSnapshot, null, 2));
+    console.log("Save function type:", typeof addObservation);
+    console.log("Storage before save:", localStorage.getItem("observations"));
+
+    if (!trimmedStudent || !currentStatus || !trimmedObserver) {
+      const errorMessage = "Missing observer, student, or status. Observation not saved.";
+      console.log("Save result/promise:", undefined);
+      console.log("Any errors:", errorMessage);
+      console.log("Storage after save:", localStorage.getItem("observations"));
+      toast.error(errorMessage);
       return;
     }
 
@@ -101,7 +119,7 @@ const Index = () => {
     const newObservation = {
       id: Date.now().toString(),
       createdAt: new Date(),
-      observer: observer.trim(),
+      observer: trimmedObserver,
       student: trimmedStudent,
       behavior: resolvedBehavior || "Unspecified",
       status: currentStatus,
@@ -119,13 +137,21 @@ const Index = () => {
       },
     };
 
+    let saveResult: unknown = undefined;
+    let error: unknown = null;
+
     try {
-      addObservation(newObservation);
+      saveResult = addObservation(newObservation);
       toast.success("Observation saved");
-    } catch (error) {
+    } catch (caught) {
+      error = caught instanceof Error ? caught : new Error(String(caught));
       console.error("Failed to persist observation", error);
       toast.error("Failed to save observation. Please try again.");
       return;
+    } finally {
+      console.log("Save result/promise:", saveResult);
+      console.log("Any errors:", error);
+      console.log("Storage after save:", localStorage.getItem("observations"));
     }
 
     // Update recent students
