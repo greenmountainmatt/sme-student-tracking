@@ -44,7 +44,7 @@ const Index = () => {
     behavior: "",
   });
 
-  const [currentContext, setCurrentContext] = useState(createDefaultContext);
+  const [currentContext, setCurrentContext] = useState(createDefaultContext());
   const [recentStudents, setRecentStudents] = useState<string[]>([]);
 
   // Save active timer state to localStorage
@@ -80,8 +80,6 @@ const Index = () => {
     resetObservationContext();
     setIsTimerRunning(true);
     setIsTimerPaused(false);
-    // Form will be cleared by timer component after validation
-    resetFormFields();
   };
 
   const handleTimerPause = () => {
@@ -231,7 +229,11 @@ const Index = () => {
             />
 
             <ContextCapture
-              onContextChange={setCurrentContext}
+              onContextChange={(context) => setCurrentContext({ 
+                ...context, 
+                prompts: context.prompts || [],
+                behavior: context.behavior || ""
+              })}
               recentStudents={recentStudents}
               isTimerRunning={isTimerRunning}
               shouldResetForm={!isTimerRunning}

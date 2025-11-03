@@ -87,15 +87,6 @@ export function ObservationTimer({
       }
     }
 
-    if (!isRunning) {
-      setTimerPhase((prev) => {
-        if (prev === "running" || prev === "paused") {
-          return prev;
-        }
-
-        const nextPhase: TimerPhase = lastRecordedDuration !== null ? "stopped" : "idle";
-        return prev === nextPhase ? prev : nextPhase;
-      });
     // When timer is not running, reset to idle state
     if (!isRunning) {
       console.debug("[ObservationTimer] timer not running, resetting to idle");
@@ -338,8 +329,6 @@ export function ObservationTimer({
             </div>
           )}
         </div>
-        <div className="flex flex-col items-center justify-center py-6 gap-2">
-          <div className="text-6xl md:text-7xl font-extrabold text-primary-foreground tabular-nums">
         <div className="flex flex-col items-center justify-center py-6">
           <div className="text-6xl md:text-7xl font-extrabold text-foreground tabular-nums">
             {formatTime(displayedTime)}
